@@ -203,7 +203,9 @@ function showSync(msg,ok=true){const el=document.getElementById('syncStatus');el
 const lsg=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
 const lss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 function ensureArr(v){return Array.isArray(v)?v:[];}
-function gS(){let s=lsg('galv_s');if(!s||typeof s!=='object'||Array.isArray(s))s={};if(!Array.isArray(s.chem)||!s.chem.length)s.chem=DEF_CHEM.map(c=>({...c}));if(!Array.isArray(s.anaTypes)||!s.anaTypes.length)s.anaTypes=DEF_AT.map(a=>({...a}));if(!Array.isArray(s.equipment))s.equipment=[];if(!Array.isArray(s.products))s.products=[];if(!s.eeRate)s.eeRate=9.37;if(s.waterRate==null)s.waterRate=0;return s;}
+function gS(){let s=lsg('galv_s');if(!s||typeof s!=='object'||Array.isArray(s))s={};if(!Array.isArray(s.chem)||!s.chem.length)s.chem=DEF_CHEM.map(c=>({...c}));if(!Array.isArray(s.anaTypes)||!s.anaTypes.length)s.anaTypes=DEF_AT.map(a=>({...a}));if(!Array.isArray(s.equipment))s.equipment=[];if(!Array.isArray(s.products))s.products=[];
+  // Merge DEF_PRODUCTS: add missing by id
+  DEF_PRODUCTS.forEach(dp=>{if(!s.products.some(p=>p.id===dp.id))s.products.push({...dp});});if(!s.eeRate)s.eeRate=9.37;if(s.waterRate==null)s.waterRate=0;return s;}
 async function sS(s){lss('galv_s',s);await sbSet('galv_settings','main',s);showSync('💾');}
 function gMD(y,m){const d=lsg(`galv_${y}_${m}`);return(d&&typeof d==='object'&&!Array.isArray(d))?d:{};}
 async function sMD(y,m,d){lss(`galv_${y}_${m}`,d);await sbSet('galv_month',`${y}_${m}`,d);showSync('💾');}
@@ -237,6 +239,30 @@ async function initFromSB(){
 
 const DEF_CHEM=[{id:'c1',name:'Блискоутворювач MERLIN BRIGHTENER',price:254.82,unit:'кг'},{id:'c2',name:'Основний компонент MERLIN STARTER',price:281.76,unit:'кг'},{id:'c3',name:'Додаток BLUPASS BC',price:220.02,unit:'кг'},{id:'c4',name:'Азотна кислота',price:25.8,unit:'л'},{id:'c5',name:'Кислота соляна',price:40,unit:'л'},{id:'c6',name:'Знежирювач Spectraclean 50',price:192.54,unit:'кг'},{id:'c7',name:'Proseal CR-schwarz Part 1/F',price:550.8,unit:'кг'},{id:'c8',name:'Proseal CR-schwarz Part 2',price:2318.4,unit:'кг'},{id:'c9',name:'Цинк Ц0 в кулях (ІМП)',price:228.96,unit:'кг'},{id:'c10',name:'Топаз корректор',price:479,unit:'л'},{id:'c11',name:'Топаз стабілізатор',price:421,unit:'л'},{id:'c12',name:'Сода',price:57,unit:'кг'},{id:'c13',name:'Добавка до кислоти BEF30',price:430,unit:'л'},{id:'c14',name:'Дистильована вода',price:10,unit:'л'},{id:'c15',name:'Пасивація Unifix',price:396,unit:'кг'}];
 const DEF_AT=[{id:'a1',name:'Цинк (г/л)',min:30,max:50,freq:1,unit:'г/л',vatId:''},{id:'a2',name:'Хлорид амонію (г/л)',min:200,max:280,freq:2,unit:'г/л',vatId:''},{id:'a3',name:'pH розчину',min:5.0,max:5.8,freq:1,unit:'pH',vatId:''},{id:'a4',name:'Блискоутворювач (мл/л)',min:0.3,max:0.8,freq:3,unit:'мл/л',vatId:''},{id:'a5',name:'Температура (°C)',min:18,max:35,freq:1,unit:'°C',vatId:''}];
+const DEF_PRODUCTS=[
+{id:'p1',name:'Болт М8*70 DIN 933 з шест.голівкою оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p2',name:'Болт М8*90 DIN 933 з шест.голівкою оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p3',name:'Гайка М3 квадр. спец. оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p4',name:'Гвинт 3*20 DIN 967 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p5',name:'Гвинт 3*44 3х заходний оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p6',name:'Гвинт 4*16 DIN 965 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p7',name:'Гвинт 4*16 DIN 967 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p8',name:'Гвинт 4*6 DIN 967 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p9',name:'Гвинт 5*16 DIN 7985 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p10',name:'Гвинт 5*25 DIN 965 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p11',name:'Гвинт 5*25 меблевий напівкругла голівка (спец) оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p12',name:'Гвинт 5*37 меблевий напівкругла голівка (спец) оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p13',name:'Гвинт 6*16 DIN 7985 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p14',name:'Гвинт 6*20 меблевий плоска голова оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p15',name:'Гвинт 6*30 меблевий плоска голова оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p16',name:'Гвинт 6*40 меблевий плоска голова оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p17',name:'Гвинт 6*50 DIN 7985 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p18',name:'Гвинт 6*50 меблевий плоска голова оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p19',name:'Заклепка 8*11 ГОСТ 10303-80 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p20',name:'Заклепка 8*12 ГОСТ 10303-80 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p21',name:'Заклепка 8*14 ГОСТ 10303-80 оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+{id:'p22',name:'Шуруп 3*16 спец оц',deloProNum:'',coatingType:'white',drumLoad:0,amperage:0,voltage:0,time:0,notes:''},
+];
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
 function today(){return new Date().toISOString().slice(0,10)}
