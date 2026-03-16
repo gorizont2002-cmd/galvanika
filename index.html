@@ -186,6 +186,7 @@ function showSync(msg,ok=true){
 }
 
 // ===== LOCAL CACHE + SB =====
+// FIX #1: lsg/lss работают с JS-объектами, stringify/parse только внутри них
 const lsg=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
 const lss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
@@ -201,16 +202,19 @@ function gS(){
   if(s.waterRate===undefined||s.waterRate===null)s.waterRate=0;
   return s;
 }
-async function sS(s){lss('galv_s',JSON.stringify(s));await sbSet('galv_settings','main',s);showSync('💾 Збережено');}
-function gMD(y,m){const d=lsg(`galv_${y}_${m}`);return (d&&typeof d==='object'&&!Array.isArray(d))?d:{};}
-async function sMD(y,m,d){lss(`galv_${y}_${m}`,JSON.stringify(d));await sbSet('galv_month',`${y}_${m}`,d);showSync('💾 День збережено');}
-function gAna(){return ensureArr(lsg('galv_ana'));}
-async function sAna(a){lss('galv_ana',JSON.stringify(a));await sbSet('galv_analyses','all',a);showSync('💾 Збережено');}
-function gBD(){return ensureArr(lsg('galv_bd'));}
-async function sBDsave(a){lss('galv_bd',JSON.stringify(a));await sbSet('galv_breakdowns','all',a);showSync('💾 Збережено');}
-function gPay(){return ensureArr(lsg('galv_pay'));}
-async function sPaySave(a){lss('galv_pay',JSON.stringify(a));await sbSet('galv_payments','all',a);showSync('💾 Збережено');}
 
+// FIX #1: убрана двойная сериализация — передаём объекты, lss сам сделает JSON.stringify
+async function sS(s){lss('galv_s',s);await sbSet('galv_settings','main',s);showSync('💾 Збережено');}
+function gMD(y,m){const d=lsg(`galv_${y}_${m}`);return (d&&typeof d==='object'&&!Array.isArray(d))?d:{};}
+async function sMD(y,m,d){lss(`galv_${y}_${m}`,d);await sbSet('galv_month',`${y}_${m}`,d);showSync('💾 День збережено');}
+function gAna(){return ensureArr(lsg('galv_ana'));}
+async function sAna(a){lss('galv_ana',a);await sbSet('galv_analyses','all',a);showSync('💾 Збережено');}
+function gBD(){return ensureArr(lsg('galv_bd'));}
+async function sBDsave(a){lss('galv_bd',a);await sbSet('galv_breakdowns','all',a);showSync('💾 Збережено');}
+function gPay(){return ensureArr(lsg('galv_pay'));}
+async function sPaySave(a){lss('galv_pay',a);await sbSet('galv_payments','all',a);showSync('💾 Збережено');}
+
+// FIX #2: убрана двойная сериализация при загрузке из Supabase
 async function initFromSB(){
   showSync('⏳ Завантаження...',true);
   try{
@@ -221,11 +225,11 @@ async function initFromSB(){
       sbGet('galv_payments','all'),
       sbGet('galv_month',`${CY}_${CM}`)
     ]);
-    if(s)lss('galv_s',JSON.stringify(s));
-    if(ana)lss('galv_ana',JSON.stringify(ana));
-    if(bd)lss('galv_bd',JSON.stringify(bd));
-    if(pay)lss('galv_pay',JSON.stringify(pay));
-    if(md)lss(`galv_${CY}_${CM}`,JSON.stringify(md));
+    if(s)lss('galv_s',s);
+    if(ana)lss('galv_ana',ana);
+    if(bd)lss('galv_bd',bd);
+    if(pay)lss('galv_pay',pay);
+    if(md)lss(`galv_${CY}_${CM}`,md);
     showSync('✅ Supabase підключено');
     renderDays();
   }catch(e){
@@ -284,11 +288,11 @@ document.querySelectorAll('.tab').forEach(t=>{
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this)cM(id);});
 });
 
+// FIX #3: убрана двойная сериализация при смене месяца
 function chM(d){
   CM+=d;if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}
   document.getElementById('mlabel').textContent=MN[CM]+' '+CY;
-  // reload month from SB on month change
-  sbGet('galv_month',`${CY}_${CM}`).then(md=>{if(md)lss(`galv_${CY}_${CM}`,JSON.stringify(md));const at=document.querySelector('.tab.active');if(at)at.click();});
+  sbGet('galv_month',`${CY}_${CM}`).then(md=>{if(md)lss(`galv_${CY}_${CM}`,md);const at=document.querySelector('.tab.active');if(at)at.click();});
 }
 
 // ===== DAYS =====
@@ -301,7 +305,17 @@ function renderDays(){
   const pay=gPay().filter(p=>p.date&&p.date.startsWith(`${CY}-${String(CM+1).padStart(2,'0')}`));
   const totPay=pay.reduce((a,p)=>a+(parseFloat(p.amount)||0),0);
   const sebPay=totKg>0?(totPay/totKg).toFixed(2):0;
+
+  // FIX #4: календарная сетка — дни по порядку недель с пустыми ячейками
   let wdH='',weH='';
+  const firstDow=new Date(CY,CM,1).getDay(); // 0=Нд..6=Сб
+  // Для будней: определяем сколько пн-пт ячеек нужно пропустить в начале
+  // Пн=1->позиция 0, Вт=2->1, Ср=3->2, Чт=4->3, Пт=5->4, Сб/Нд->не в будни
+  const wdMap={1:0,2:1,3:2,4:3,5:4}; // день недели -> позиция в сетке будней
+  const weMap={6:0,0:1}; // Сб->0, Нд->1
+
+  // Собираем будни и выходные по неделям
+  let wdWeek=0, weWeek=0, lastWdWeekNum=-1, lastWeWeekNum=-1;
   for(let d=1;d<=days;d++){
     const dd=data[d]||{},dow=new Date(CY,CM,d).getDay();
     const wknd=dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);
