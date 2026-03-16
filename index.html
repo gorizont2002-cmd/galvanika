@@ -25,7 +25,7 @@ header h1{font-size:15px;font-weight:600}
 .dc{background:#fff;border:1px solid #dde;border-radius:7px;padding:6px 7px;cursor:pointer;min-height:82px;transition:.15s;overflow:hidden}
 .dc:hover{border-color:#1a3a5c}.dc.we{background:#fff5f5;border-color:#f5b7b1}.dc.hd{border-color:#a9cce3;background:#eaf4fb}.dc.empty{background:transparent;border:none;cursor:default;min-height:0}
 .dn{font-size:13px;font-weight:700;color:#1a3a5c}.dc.we .dn{color:#c0392b}
-.dc-info{font-size:11px;color:#444;margin-top:2px;line-height:1.4}
+.dc-info{font-size:12px;color:#333;margin-top:2px;line-height:1.5;font-weight:500}
 .mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:14px;align-items:flex-start;justify-content:center}
 .mb.open{display:flex}
 .mw{background:#fff;border-radius:10px;width:100%;max-width:780px}
@@ -168,7 +168,7 @@ function collectDays(from,to){const dF=new Date(from),dT=new Date(to),all=[];let
 function getActiveQueue(forDate){return gQueue().filter(q=>q.deadline>=forDate||!q.deadline)}
 
 document.querySelectorAll('.tab').forEach(t=>{t.addEventListener('click',function(){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.pg').forEach(x=>x.classList.remove('show'));this.classList.add('active');document.getElementById('pg-'+this.dataset.tab).classList.add('show');({days:renderDays,queue:renderQueue,analysis:renderAnalysis,equipment:renderEquipment,breakdowns:renderBreakdowns,payments:renderPayments,products:renderProducts,summary:renderSummary,settings:renderSettings})[this.dataset.tab]?.()})});
-['mDay','mAna','mQC','mEq','mAnaType','mProd','mBD','mPay','mEE','mQ','mDayAna','mPwd'].forEach(id=>{document.getElementById(id)?.addEventListener('click',function(e){if(e.target===this)cM(id)})});
+// Modals close ONLY by X button, not by clicking backdrop;
 
 // ===== DAYS =====
 function renderDays(){
@@ -190,8 +190,9 @@ function renderDays(){
     let inner=`<div style="display:flex;justify-content:space-between"><span class="dn">${d}</span><span style="font-size:9px;color:#aaa">${DW[dow]}</span></div>`;
     if(hasData){
       const kg=(dd.wz||0)+(dd.bz||0);
-      if(kg)inner+=`<div class="dc-info"><b>${kg}кг</b> · ${dd.seb||0}₴/кг</div>`;
-      if(dd.chemTotal)inner+=`<div class="dc-info">💊 <b>${Math.round(dd.chemTotal)}</b>₴</div>`;
+      if(kg)inner+=`<div class="dc-info">⚖️ <b>${kg}</b> кг</div>`;
+      if(dd.seb)inner+=`<div class="dc-info">💰 <b>${dd.seb}</b> ₴/кг</div>`;
+      if(dd.chemTotal)inner+=`<div class="dc-info">🧪 <b>${Math.round(dd.chemTotal)}</b> ₴</div>`;
     }else if(wknd)inner+=`<div class="dc-info" style="color:#c0392b">Вихідний</div>`;
     else inner+=`<div class="dc-info" style="color:#bbb">—</div>`;
     if(dayAna.length){let e=0,w=0;dayAna.forEach(a=>{const at=s.anaTypes.find(t=>t.id===a.typeId);if(!at)return;const st=anaStatus(a.value,at);if(st==='err')e++;else if(st==='warn')w++});inner+=`<div class="dc-info">🔬${dayAna.length}${e?` <span style="color:#e74c3c">❌${e}</span>`:''}${w?` <span style="color:#e67e22">⚠${w}</span>`:''}</div>`}
@@ -220,11 +221,18 @@ function openDay(d){
   let cH=sC.map((r,i)=>{_cri=i+1;return bCR(i,r,s)}).join('');
   sP.forEach((r,i)=>{if(r.prodId)_selP[i]=r.prodId});
 
-  // Queue display
+  // Queue display — show active (not closed) items with remainder
   let qH='';
-  if(activeQ.length){
-    qH=`<div class="sec"><div class="st">📋 Черга (дедлайн ≥ ${ds})</div><table class="prtbl"><thead><tr><th>Виріб</th><th class="r">Замовл.кг</th><th>Дедлайн</th><th>Прим.</th></tr></thead><tbody>`;
-    activeQ.forEach(q=>{const p=s.products.find(x=>x.id===q.prodId);qH+=`<tr><td>${p?p.name:'—'}</td><td class="r">${q.kg}</td><td>${q.deadline}</td><td style="font-size:11px">${q.notes||''}</td></tr>`});
+  const openQ=activeQ.filter(q=>q.status!=='closed');
+  if(openQ.length){
+    qH=`<div class="sec"><div class="st">📋 Черга (активна)</div><table class="prtbl"><thead><tr><th>Виріб</th><th class="r">Замовл.</th><th class="r">Вже покр.</th><th class="r">Залишок</th><th>Дедлайн</th></tr></thead><tbody>`;
+    openQ.forEach(q=>{
+      const p=s.products.find(x=>x.id===q.prodId);
+      // Calculate already covered across ALL days
+      const coveredKg=getAllCoveredForQueue(q);
+      const remain=Math.max(0,(q.kg||0)-coveredKg);
+      const cls=remain<=0?'q-over':'q-under';
+      qH+=`<tr><td>${p?p.name:'—'}</td><td class="r">${q.kg} кг</td><td class="r">${coveredKg.toFixed(1)}</td><td class="r"><span class="q-badge ${cls}">${remain<=0?'✅ Готово':remain.toFixed(1)+' кг'}</span></td><td>${q.deadline}</td></tr>`});
     qH+=`</tbody></table></div>`;
   }
 
@@ -253,7 +261,23 @@ function openDay(d){
     </div>`;
   oM('mDay');calcPT();calcCT();calcEE();
 }
-function getQueueProdIds(){const ds=dStr(getCY(),getCM(),curDay);return gQueue().filter(q=>q.deadline>=ds).map(q=>q.prodId)}
+function getQueueProdIds(){const ds=dStr(getCY(),getCM(),curDay);return[...new Set(gQueue().filter(q=>q.deadline>=ds&&q.status!=='closed').map(q=>q.prodId))]}
+
+// Calculate total covered kg for a queue item across all stored months
+function getAllCoveredForQueue(qi){
+  let total=0;
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k?.match(/^galv_\d{4}_\d+$/))continue;
+    try{const md=JSON.parse(localStorage.getItem(k));
+      for(const dd of Object.values(md)){
+        if(!dd||dd.weekend)continue;
+        (dd.prodRows||[]).forEach(r=>{if(r.prodId===qi.prodId)total+=(r.kg||0)});
+      }
+    }catch{}
+  }
+  return total;
+}
 function bPR(i,r,s,ds){
   const nm=r?.prodId?(s.products.find(p=>p.id===r.prodId)||{}).name||'':'';
   return`<tr id="pr_${i}"><td><div class="srchbox"><input type="text" id="ps_${i}" placeholder="Пошук..." value="${nm}" oninput="fProd(${i})" onfocus="sPD(${i})" autocomplete="off"><div class="sdrop" id="pd_${i}"></div></div></td><td><input type="number" id="pdr_${i}" min="1" value="${r?r.drums:1}" style="width:42px" oninput="oPC(${i})"></td><td><input type="number" id="pkg_${i}" step="0.1" value="${r?r.kg:''}" style="width:50px" oninput="calcPT()"></td><td><select id="pt_${i}" style="font-size:11px;width:65px"><option value="coat" ${!r||!r.recoat?'selected':''}>Покр.</option><option value="recoat" ${r?.recoat?'selected':''}>Перепокр.</option></select></td><td><input type="text" id="pn_${i}" value="${r?.notes||''}" style="font-size:11px;width:55px"></td><td><button class="btn bsuc bsm" title="Контроль якості" onclick="openQCForProd(${i})">✅</button></td><td><button class="btn bd2 bsm" onclick="document.getElementById('pr_${i}').remove();calcPT()">✕</button></td></tr>`}
@@ -284,27 +308,42 @@ async function saveEEP(){const n=eeSel.size;if(!n)return alert('Виберіть
 
 // ===== QUEUE (общая, с дедлайном) =====
 function renderQueue(){
-  const s=gS(),q=gQueue().sort((a,b)=>a.deadline.localeCompare(b.deadline)),allDays=collectDays(gFrom,gTo);
+  const s=gS(),q=gQueue().sort((a,b)=>(a.status==='closed'?1:0)-(b.status==='closed'?1:0)||a.deadline.localeCompare(b.deadline)),allDays=collectDays(gFrom,gTo);
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="font-size:14px;color:#1a3a5c">📋 Черга</h3><button class="btn bp" onclick="openQueueModal(null)">+ Замовлення</button></div>`;
-  html+=`<table class="tbl"><thead><tr><th>Виріб</th><th class="r">Замовл.кг</th><th>Дедлайн</th><th class="r">Факт кг</th><th>Різниця</th><th>Прим.</th><th></th></tr></thead><tbody>`;
-  if(!q.length)html+=`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">Немає</td></tr>`;
+  html+=`<table class="tbl"><thead><tr><th>Виріб</th><th class="r">Замовл.</th><th>Дедлайн</th><th class="r">Факт</th><th>Різниця</th><th>Статус</th><th>Прим.</th><th></th></tr></thead><tbody>`;
+  if(!q.length)html+=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:16px">Немає</td></tr>`;
   q.forEach(qi=>{
     const p=s.products.find(x=>x.id===qi.prodId);
-    // Fact: sum all days up to deadline
-    const factDays=collectDays(gFrom,qi.deadline||gTo);
-    const factKg=factDays.reduce((a,d)=>{return a+(d.prodRows||[]).filter(r=>r.prodId===qi.prodId).reduce((s,r)=>s+(r.kg||0),0)},0);
-    const diff=factKg-(qi.kg||0),cls=diff>0?'q-over':diff<0?'q-under':'q-exact';
-    const overdue=qi.deadline<today()&&diff<0;
-    html+=`<tr${overdue?' class="erow"':''}><td>${p?p.name:qi.prodId}</td><td class="r">${qi.kg}</td><td${overdue?' style="color:#e74c3c;font-weight:700"':''}>${qi.deadline}</td><td class="r">${factKg.toFixed(1)}</td><td><span class="q-badge ${cls}">${diff>0?'+':''}${diff.toFixed(1)}</span></td><td style="font-size:11px">${qi.notes||''}</td><td><button class="btn bdef bsm" onclick="openQueueModal('${qi.id}')">✏️</button><button class="btn bd2 bsm" onclick="delQueue('${qi.id}')">✕</button></td></tr>`
+    const coveredKg=getAllCoveredForQueue(qi);
+    const diff=coveredKg-(qi.kg||0),cls=diff>=0?'q-over':'q-under';
+    const overdue=qi.deadline<today()&&diff<0&&qi.status!=='closed';
+    const isClosed=qi.status==='closed';
+    html+=`<tr${overdue?' class="erow"':''}${isClosed?' style="opacity:0.5"':''}>
+      <td>${p?p.name:qi.prodId}</td><td class="r">${qi.kg}</td>
+      <td${overdue?' style="color:#e74c3c;font-weight:700"':''}>${qi.deadline||'—'}</td>
+      <td class="r">${coveredKg.toFixed(1)}</td>
+      <td><span class="q-badge ${cls}">${diff>=0?'+':''}${diff.toFixed(1)}</span></td>
+      <td>${isClosed?'<span class="badge bok">Закрита</span>':diff>=0?'<span class="badge bok">Виконано</span>':'<span class="badge bwn">Активна</span>'}</td>
+      <td style="font-size:11px">${qi.notes||''}</td>
+      <td style="white-space:nowrap">
+        ${!isClosed?`<button class="btn bsuc bsm" onclick="closeQueue('${qi.id}')" title="Закрити">✅</button>`:''}
+        <button class="btn bdef bsm" onclick="openQueueModal('${qi.id}')">✏️</button>
+        <button class="btn bd2 bsm" onclick="delQueue('${qi.id}')">✕</button>
+      </td></tr>`
   });
-  html+=`</tbody></table>`;document.getElementById('pg-queue').innerHTML=html}
+  html+=`</tbody></table>`;document.getElementById('pg-queue').innerHTML=html;
+  // Auto-close fulfilled items
+  autoCloseQueue();
+}
 function openQueueModal(id){
   editIds.q=id;const q=gQueue(),qi=id?q.find(x=>x.id===id):null,s=gS();
   document.getElementById('mQT').textContent=id?'Редагувати':'Нове замовлення';
   const pO=s.products.map(p=>`<option value="${p.id}" ${qi?.prodId===p.id?'selected':''}>${p.name}</option>`).join('');
-  document.getElementById('mQB').innerHTML=`<div class="fg g3"><div><label>Виріб</label><select id="qP">${pO}</select></div><div><label>Кількість (кг)</label><input type="number" id="qKg" step="0.1" value="${qi?.kg||''}"></div><div><label>Дедлайн (покрити до)</label><input type="date" id="qDL" value="${qi?.deadline||''}"></div></div><div><label>Примітка</label><textarea id="qN" rows="2">${qi?.notes||''}</textarea></div>`;oM('mQ')}
-async function saveQueue(){const q=gQueue(),obj={id:editIds.q||uid(),prodId:gv('qP'),kg:fv('qKg'),deadline:gv('qDL'),notes:gv('qN')};if(editIds.q){const i=q.findIndex(x=>x.id===editIds.q);if(i>=0)q[i]=obj}else q.push(obj);await sQueueSave(q);cM('mQ');renderQueue()}
+  document.getElementById('mQB').innerHTML=`<div class="fg g3"><div><label>Виріб</label><select id="qP">${pO}</select></div><div><label>Кількість (кг)</label><input type="number" id="qKg" step="0.1" value="${qi?.kg||''}"></div><div><label>Дедлайн (покрити до)</label><input type="date" id="qDL" value="${qi?.deadline||''}"></div></div><div class="fg g2"><div><label>Статус</label><select id="qSt"><option value="active" ${qi?.status!=='closed'?'selected':''}>Активна</option><option value="closed" ${qi?.status==='closed'?'selected':''}>Закрита</option></select></div><div><label>Примітка</label><input type="text" id="qN" value="${qi?.notes||''}"></div></div>`;oM('mQ')}
+async function saveQueue(){const q=gQueue(),obj={id:editIds.q||uid(),prodId:gv('qP'),kg:fv('qKg'),deadline:gv('qDL'),status:gv('qSt')||'active',notes:gv('qN')};if(editIds.q){const i=q.findIndex(x=>x.id===editIds.q);if(i>=0)q[i]=obj}else q.push(obj);await sQueueSave(q);cM('mQ');renderQueue()}
 async function delQueue(id){if(!confirm('Видалити?'))return;await sQueueSave(gQueue().filter(x=>x.id!==id));renderQueue()}
+async function closeQueue(id){const q=gQueue(),qi=q.find(x=>x.id===id);if(qi){qi.status='closed';await sQueueSave(q);renderQueue()}}
+async function autoCloseQueue(){const q=gQueue();let changed=false;q.forEach(qi=>{if(qi.status==='closed')return;const covered=getAllCoveredForQueue(qi);if(covered>=(qi.kg||0)){qi.status='closed';changed=true}});if(changed)await sQueueSave(q)}
 
 // ===== QC =====
 function openQCModal(id,preDate,preProd){
@@ -337,6 +376,14 @@ function openAnaModal(id,pt,pv,pd){editIds.ana=id;const s=gS(),a=id?gAna().find(
 function prevAna(){const at=gS().anaTypes.find(t=>t.id===gv('aT')),v=gv('aVal'),el=document.getElementById('aPrev');if(!el)return;if(!at||!v){el.innerHTML='';return}const st=anaStatus(v,at);el.innerHTML=`<div style="background:${{ok:'#d5f5e3',warn:'#fef9e7',err:'#fadbd8'}[st]};padding:6px;border-radius:5px;font-size:12px">${{ok:'✅ Норма',warn:'⚠️ Межа',err:'❌ Відхил'}[st]} (${at.min}–${at.max})</div>`}
 async function saveAna(){const ana=gAna(),obj={id:editIds.ana||uid(),date:gv('aD'),typeId:gv('aT'),vatId:gv('aV'),value:gv('aVal'),notes:gv('aN')};if(editIds.ana){const i=ana.findIndex(a=>a.id===editIds.ana);if(i>=0)ana[i]=obj}else ana.push(obj);await sAna(ana);cM('mAna');renderAnalysis()}
 async function delAna(id){if(!confirm('Видалити?'))return;await sAna(gAna().filter(a=>a.id!==id));renderAnalysis()}
+
+// Day QC modal (from summary)
+function openDayQCModal(ds){
+  const s=gS(),qcs=gQC().filter(q=>q.date===ds);
+  document.getElementById('mDayAnaT').textContent=`Контроль якості за ${ds}`;
+  let h='';
+  if(qcs.length){h=`<table class="tbl"><thead><tr><th>Виріб</th><th class="r">Товщина мкм</th><th>Примітка</th></tr></thead><tbody>`;qcs.forEach(q=>{const p=s.products.find(x=>x.id===q.prodId);h+=`<tr><td>${p?.name||'—'}</td><td class="r"><b>${q.thickness||'—'}</b></td><td style="font-size:11px">${q.notes||''}</td></tr>`});h+='</tbody></table>'}else h='<div style="color:#aaa">Немає записів</div>';
+  document.getElementById('mDayAnaB').innerHTML=h;oM('mDayAna')}
 
 // Day analyses modal (from summary)
 function openDayAnaModal(ds){
@@ -398,11 +445,13 @@ function renderSummary(){
   h+=`<div class="bar-wrap"><b style="color:#1a3a5c">⚗️ Хімія по ваннах</b>`;
   Object.keys(chemByVat).sort().forEach(k=>{const vn=k==='_'?'Без ванни':s.equipment.find(e=>e.id===k)?.name||k;let vt=0;h+=`<div style="font-size:11px;font-weight:600;color:#1a3a5c;margin:6px 0 3px">🛁 ${vn}</div><table class="subtbl"><tbody>`;Object.entries(chemByVat[k]).forEach(([cid,v])=>{const c=s.chem.find(x=>x.id===cid);vt+=v.sum;h+=`<tr><td>${c?.name||cid}</td><td class="r">${v.qty.toFixed(3)}</td><td class="r" style="color:#c0392b">${v.sum.toFixed(2)}₴</td></tr>`});h+=`<tr class="stot"><td>Разом</td><td></td><td class="r" style="color:#c0392b">${vt.toFixed(2)}₴</td></tr></tbody></table>`});h+=`</div>`;
 
-  // Day table with clickable dates and analysis count
-  h+=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>День</th><th class="r">кг</th><th class="r">Хімія</th><th class="r">ЕЕ</th><th class="r">Вода</th><th class="r">ЗП</th><th class="r">Інше</th><th class="r">Разом</th><th class="r">₴/кг</th><th class="r">🔬</th></tr></thead><tbody>`;
-  allDays.forEach(dd=>{const kg=(dd.wz||0)+(dd.bz||0),dAna=ana.filter(a=>a.date===dd.date).length;const dp=dd.date.split('-'),dy=+dp[0],dm=+dp[1]-1,dday=+dp[2];
-    h+=`<tr><td style="white-space:nowrap"><a href="#" style="color:#1a3a5c" onclick="event.preventDefault();setMonth(${dy},${dm});setTimeout(()=>openDay(${dday}),200)">${dd.date}</a></td><td class="r">${kg}</td><td class="r">${Math.round(dd.chemTotal||0)}</td><td class="r">${(dd.eeCost||0).toFixed(0)}</td><td class="r">${(dd.waterCost||0).toFixed(0)}</td><td class="r">${Math.round(dd.wage||0)}</td><td class="r">${Math.round(dd.other||0)}</td><td class="r">${Math.round(dd.totalCost||0)}</td><td class="r"><b>${dd.seb||0}</b></td><td class="r">${dAna?`<a href="#" style="color:#1a3a5c" onclick="event.preventDefault();openDayAnaModal('${dd.date}')">${dAna}</a>`:''}</td></tr>`});
-  h+=`<tr class="tot"><td>Разом</td><td class="r">${tKg}</td><td class="r">${Math.round(tChem)}</td><td class="r">${tEe.toFixed(0)}</td><td class="r">${tWtr.toFixed(0)}</td><td class="r">${Math.round(tWg)}</td><td class="r">${Math.round(tOth)}</td><td class="r">${Math.round(tCost)}</td><td class="r"><b>${avgS}</b></td><td></td></tr></tbody></table></div>`;
+  // Day table with clickable dates, analysis and QC counts
+  const qcs=gQC();
+  h+=`<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>День</th><th class="r">кг</th><th class="r">Хімія</th><th class="r">ЕЕ</th><th class="r">Вода</th><th class="r">ЗП</th><th class="r">Інше</th><th class="r">Разом</th><th class="r">₴/кг</th><th class="r">🔬</th><th class="r">✅</th></tr></thead><tbody>`;
+  let totAnaC=0,totQcC=0;
+  allDays.forEach(dd=>{const kg=(dd.wz||0)+(dd.bz||0),dAna=ana.filter(a=>a.date===dd.date).length,dQC=qcs.filter(q=>q.date===dd.date).length;totAnaC+=dAna;totQcC+=dQC;const dp=dd.date.split('-'),dy=+dp[0],dm=+dp[1]-1,dday=+dp[2];
+    h+=`<tr><td style="white-space:nowrap"><a href="#" style="color:#1a3a5c" onclick="event.preventDefault();setMonth(${dy},${dm});setTimeout(()=>openDay(${dday}),200)">${dd.date}</a></td><td class="r">${kg}</td><td class="r">${Math.round(dd.chemTotal||0)}</td><td class="r">${(dd.eeCost||0).toFixed(0)}</td><td class="r">${(dd.waterCost||0).toFixed(0)}</td><td class="r">${Math.round(dd.wage||0)}</td><td class="r">${Math.round(dd.other||0)}</td><td class="r">${Math.round(dd.totalCost||0)}</td><td class="r"><b>${dd.seb||0}</b></td><td class="r">${dAna?`<a href="#" style="color:#1a3a5c" onclick="event.preventDefault();openDayAnaModal('${dd.date}')">${dAna}</a>`:''}</td><td class="r">${dQC?`<a href="#" style="color:#27ae60" onclick="event.preventDefault();openDayQCModal('${dd.date}')">${dQC}</a>`:''}</td></tr>`});
+  h+=`<tr class="tot"><td>Разом</td><td class="r">${tKg}</td><td class="r">${Math.round(tChem)}</td><td class="r">${tEe.toFixed(0)}</td><td class="r">${tWtr.toFixed(0)}</td><td class="r">${Math.round(tWg)}</td><td class="r">${Math.round(tOth)}</td><td class="r">${Math.round(tCost)}</td><td class="r"><b>${avgS}</b></td><td class="r">${totAnaC||''}</td><td class="r">${totQcC||''}</td></tr></tbody></table></div>`;
   document.getElementById('pg-summary').innerHTML=h}
 
 // ===== SETTINGS =====
