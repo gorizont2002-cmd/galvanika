@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Гальваніка</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:13px;background:#f0f2f5;color:#222}
+header{background:#1a3a5c;color:#fff;padding:9px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:300}
+header h1{font-size:15px;font-weight:600}
+.mnav{display:flex;align-items:center;gap:5px;margin-left:auto}
+.mnav button{background:rgba(255,255,255,.2);border:none;color:#fff;padding:3px 9px;border-radius:4px;cursor:pointer}
+#mlabel{font-size:13px;font-weight:500;min-width:130px;text-align:center}
+.tabs{display:flex;gap:2px;background:#d0d5dd;padding:5px 10px 0;border-bottom:2px solid #1a3a5c;overflow-x:auto}
+.tab{padding:6px 12px;border-radius:6px 6px 0 0;cursor:pointer;background:#bfc5d0;font-size:12px;font-weight:500;color:#555;white-space:nowrap;flex-shrink:0}
+.tab.active{background:#fff;color:#1a3a5c;border-bottom:2px solid #fff;margin-bottom:-2px}
+.pg{padding:10px;display:none}.pg.show{display:block}
+.krow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid #dde;border-radius:8px;padding:9px 11px}
+.kpi-l{font-size:10px;color:#888;margin-bottom:2px}
+.kpi-v{font-size:18px;font-weight:700;color:#1a3a5c}
+.kpi-s{font-size:10px;color:#aaa}
+.cal{display:grid;grid-template-columns:5fr 2fr;gap:8px;margin-bottom:12px}
+.wd-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.we-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start}
+.cl{font-size:10px;font-weight:600;color:#888;text-align:center;padding:2px 0}
+.dc{background:#fff;border:1px solid #dde;border-radius:7px;padding:7px 8px;cursor:pointer;min-height:66px;transition:border-color .15s}
+.dc:hover{border-color:#1a3a5c}
+.dc.we{background:#fff5f5;border-color:#f5b7b1}
+.dc.hd{border-color:#a9cce3;background:#eaf4fb}
+.dc.hd.we{background:#fdecea}
+.dn{font-size:13px;font-weight:700;color:#1a3a5c}
+.dc.we .dn{color:#c0392b}
+.ds{font-size:10px;color:#666;margin-top:2px;line-height:1.4}
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:14px;align-items:flex-start;justify-content:center}
+.mb.open{display:flex}
+.mw{background:#fff;border-radius:10px;width:100%;max-width:760px}
+.mw.sm{max-width:500px}
+.mh{background:#1a3a5c;color:#fff;padding:10px 14px;display:flex;align-items:center;border-radius:10px 10px 0 0}
+.mh h2{font-size:14px;font-weight:600;flex:1}
+.mh button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1}
+.bd{padding:14px}
+.mf{padding:9px 14px;border-top:1px solid #eee;display:flex;gap:7px;justify-content:flex-end}
+.sec{margin-bottom:13px}
+.st{font-size:11px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #d0e8f5}
+.fg{display:grid;gap:7px;margin-bottom:7px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+label{font-size:11px;color:#555;display:block;margin-bottom:2px}
+input,select,textarea{width:100%;padding:5px 7px;border:1px solid #ccc;border-radius:4px;font-size:12px;color:#222;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1a3a5c}
+.btn{padding:5px 13px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:500}
+.bp{background:#1a3a5c;color:#fff}.bp:hover{background:#14304d}
+.bd2{background:#c0392b;color:#fff}.bd2:hover{background:#a93226}
+.bdef{background:#eee;color:#333}.bdef:hover{background:#ddd}
+.bsuc{background:#27ae60;color:#fff}.bsuc:hover{background:#219653}
+.bwarn{background:#e67e22;color:#fff}
+.bsm{padding:3px 8px;font-size:11px}
+.badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600}
+.bok{background:#d5f5e3;color:#1e8449}
+.bwn{background:#fef9e7;color:#b7950b;border:1px solid #f9e79f}
+.berr{background:#fadbd8;color:#922b21}
+.bgr{background:#f0f0f0;color:#666}
+.tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #dde;margin-bottom:12px}
+.tbl th{background:#1a3a5c;color:#fff;padding:6px 9px;text-align:left;font-size:11px;white-space:nowrap}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td{padding:5px 9px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:middle}
+.tbl tr:hover td{background:#f5f8ff}
+.tbl .tot td{background:#eaf4fb;font-weight:700;border-top:2px solid #a9cce3}
+.tbl .erow td{background:#ffebee}
+.tbl .wrow td{background:#fff8e1}
+.av{font-weight:700}.av.ok{color:#27ae60}.av.warn{color:#e67e22}.av.err{color:#e74c3c}
+.prtbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+.prtbl th{background:#eaf4fb;padding:4px 6px;font-size:10px;font-weight:700;text-align:left}
+.prtbl td{padding:3px 5px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.prtbl td input,.prtbl td select{padding:3px 5px;font-size:11px}
+.srchbox{position:relative}
+.srchbox input{width:100%}
+.sdrop{position:absolute;z-index:50;background:#fff;border:1px solid #ccc;border-top:none;border-radius:0 0 5px 5px;max-height:180px;overflow-y:auto;width:100%;display:none}
+.sdrop.open{display:block}
+.sitem{padding:6px 9px;cursor:pointer;font-size:12px}
+.sitem:hover{background:#eaf4fb}
+.chtbl{width:100%;border-collapse:collapse;font-size:12px}
+.chtbl th{background:#eaf4fb;padding:4px 6px;font-size:10px;font-weight:700;text-align:left}
+.chtbl td{padding:3px 5px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.chtbl td input,.chtbl td select{padding:3px 5px;font-size:11px}
+.asc-row{display:flex;align-items:center;gap:3px;margin-bottom:2px}
+.asc-name{font-size:11px;width:180px;flex-shrink:0;text-align:right;padding-right:6px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adc{width:20px;height:20px;border-radius:3px;border:1px solid #e0e0e0;background:#f5f5f5;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:7px}
+.adc.pl{background:#d6eaf8;border-color:#a9cce3}
+.adc.dok{background:#d5f5e3;border-color:#a9dfbf}
+.adc.dw{background:#fef9e7;border-color:#f9e79f}
+.adc.de{background:#fadbd8;border-color:#f5b7b1}
+.adc.ov{background:#fadbd8;border-color:#e74c3c}
+.adn{font-size:9px;color:#bbb;width:20px;text-align:center;flex-shrink:0}
+.bar-wrap{background:#fff;border:1px solid #dde;border-radius:8px;padding:12px;margin-bottom:12px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-lbl{font-size:11px;width:150px;flex-shrink:0;color:#555;text-align:right}
+.bar-bg{flex:1;background:#f0f2f5;border-radius:3px;height:14px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-size:11px;min-width:100px}
+.abox{border-radius:6px;padding:8px 11px;margin-bottom:7px;font-size:12px}
+.aok{background:#d5f5e3;border:1px solid #a9dfbf}
+.aw{background:#fff3cd;border:1px solid #ffc107}
+.ae{background:#f8d7da;border:1px solid #f5c6cb}
+.eqcard{background:#fff;border:1px solid #dde;border-radius:8px;padding:11px;margin-bottom:8px}
+.eqh{display:flex;align-items:flex-start;gap:10px}
+.eqico{width:34px;height:34px;background:#eaf4fb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+#syncStatus{position:fixed;bottom:10px;right:10px;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;z-index:999;transition:opacity .5s;opacity:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚗️ Гальваніка</h1>
+  <div class="mnav">
+    <button onclick="chM(-1)">‹</button>
+    <span id="mlabel"></span>
+    <button onclick="chM(1)">›</button>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab active" data-tab="days">📅 Дні</div>
+  <div class="tab" data-tab="analysis">🔬 Аналізи</div>
+  <div class="tab" data-tab="equipment">🏭 Обладнання</div>
+  <div class="tab" data-tab="breakdowns">🔧 Поломки</div>
+  <div class="tab" data-tab="payments">💰 Оплати</div>
+  <div class="tab" data-tab="products">📦 Товари</div>
+  <div class="tab" data-tab="summary">📊 Підсумок</div>
+  <div class="tab" data-tab="settings">⚙️ Налаштування</div>
+</div>
+<div id="pg-days" class="pg show"></div>
+<div id="pg-analysis" class="pg"></div>
+<div id="pg-equipment" class="pg"></div>
+<div id="pg-breakdowns" class="pg"></div>
+<div id="pg-payments" class="pg"></div>
+<div id="pg-products" class="pg"></div>
+<div id="pg-summary" class="pg"></div>
+<div id="pg-settings" class="pg"></div>
+<div id="syncStatus"></div>
+
+<div class="mb" id="mDay"><div class="mw"><div class="mh"><h2 id="mDayT"></h2><button onclick="cM('mDay')">×</button></div><div class="bd" id="mDayB"></div><div class="mf"><button class="btn bd2" onclick="clearDay()">Очистити</button><button class="btn bdef" onclick="cM('mDay')">Скасувати</button><button class="btn bp" onclick="saveDay()">Зберегти</button></div></div></div>
+<div class="mb" id="mAna"><div class="mw sm"><div class="mh"><h2 id="mAnaT"></h2><button onclick="cM('mAna')">×</button></div><div class="bd" id="mAnaB"></div><div class="mf"><button class="btn bdef" onclick="cM('mAna')">Скасувати</button><button class="btn bp" onclick="saveAna()">Зберегти</button></div></div></div>
+<div class="mb" id="mEq"><div class="mw sm"><div class="mh"><h2 id="mEqT"></h2><button onclick="cM('mEq')">×</button></div><div class="bd" id="mEqB"></div><div class="mf"><button class="btn bdef" onclick="cM('mEq')">Скасувати</button><button class="btn bp" id="mEqSave" onclick="saveEq()">Зберегти</button></div></div></div>
+<div class="mb" id="mAnaType"><div class="mw sm"><div class="mh"><h2 id="mATT"></h2><button onclick="cM('mAnaType')">×</button></div><div class="bd" id="mATB"></div><div class="mf"><button class="btn bdef" onclick="cM('mAnaType')">Скасувати</button><button class="btn bp" onclick="saveAnaType()">Зберегти</button></div></div></div>
+<div class="mb" id="mProd"><div class="mw sm"><div class="mh"><h2 id="mProdT"></h2><button onclick="cM('mProd')">×</button></div><div class="bd" id="mProdB"></div><div class="mf"><button class="btn bdef" onclick="cM('mProd')">Скасувати</button><button class="btn bp" onclick="saveProd()">Зберегти</button></div></div></div>
+<div class="mb" id="mBD"><div class="mw sm"><div class="mh"><h2 id="mBDT"></h2><button onclick="cM('mBD')">×</button></div><div class="bd" id="mBDB"></div><div class="mf"><button class="btn bdef" onclick="cM('mBD')">Скасувати</button><button class="btn bp" onclick="saveBD()">Зберегти</button></div></div></div>
+<div class="mb" id="mPay"><div class="mw sm"><div class="mh"><h2 id="mPayT"></h2><button onclick="cM('mPay')">×</button></div><div class="bd" id="mPayB"></div><div class="mf"><button class="btn bdef" onclick="cM('mPay')">Скасувати</button><button class="btn bp" onclick="savePay()">Зберегти</button></div></div></div>
+<div class="mb" id="mEE"><div class="mw sm"><div class="mh"><h2>ЕЕ та Вода за період</h2><button onclick="cM('mEE')">×</button></div><div class="bd" id="mEEB"></div><div class="mf"><button class="btn bdef" onclick="cM('mEE')">Скасувати</button><button class="btn bp" onclick="saveEEP()">Розподілити</button></div></div></div>
+
+<script>
+const MN=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const DW=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+let CY=new Date().getFullYear(), CM=new Date().getMonth(), curDay=null;
+let editIds={ana:null,eq:null,at:null,prod:null,bd:null,pay:null};
+
+// ===== SUPABASE =====
+const SB_URL='https://kklnjlakwmoppjgcxdba.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbG5qbGFrd21vcHBqZ2N4ZGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1ODk1MTksImV4cCI6MjA4OTE2NTUxOX0.e3XPoEMsQ_VdWbf2EZ5kUa2jW5eWOZYTmJuiyUxUuUk';
+const SBH={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sbGet(table,id){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}&select=data`,{headers:SBH});
+    const d=await r.json();
+    return d&&d[0]?d[0].data:null;
+  }catch(e){return null;}
+}
+async function sbSet(table,id,data){
+  try{
+    await fetch(`${SB_URL}/rest/v1/${table}`,{
+      method:'POST',
+      headers:{...SBH,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({id,data})
+    });
+  }catch(e){console.warn('sbSet',e);}
+}
+
+function showSync(msg,ok=true){
+  const el=document.getElementById('syncStatus');
+  el.style.background=ok?'#d5f5e3':'#fadbd8';
+  el.style.color=ok?'#1e8449':'#922b21';
+  el.style.opacity='1';el.textContent=msg;
+  setTimeout(()=>{el.style.opacity='0';},2500);
+}
+
+// ===== LOCAL CACHE + SB =====
+const lsg=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const lss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+function gS(){let s=lsg('galv_s');if(!s)s={chem:DEF_CHEM.map(c=>({...c})),anaTypes:DEF_AT.map(a=>({...a})),equipment:[],products:[],eeRate:9.37,waterRate:0};if(!s.products)s.products=[];if(!s.equipment)s.equipment=[];return s;}
+async function sS(s){lss('galv_s',JSON.stringify(s));await sbSet('galv_settings','main',s);showSync('💾 Збережено');}
+function gMD(y,m){return lsg(`galv_${y}_${m}`)||{};}
+async function sMD(y,m,d){lss(`galv_${y}_${m}`,JSON.stringify(d));await sbSet('galv_month',`${y}_${m}`,d);showSync('💾 День збережено');}
+function gAna(){return lsg('galv_ana')||[];}
+async function sAna(a){lss('galv_ana',JSON.stringify(a));await sbSet('galv_analyses','all',a);showSync('💾 Збережено');}
+function gBD(){return lsg('galv_bd')||[];}
+async function sBDsave(a){lss('galv_bd',JSON.stringify(a));await sbSet('galv_breakdowns','all',a);showSync('💾 Збережено');}
+function gPay(){return lsg('galv_pay')||[];}
+async function sPaySave(a){lss('galv_pay',JSON.stringify(a));await sbSet('galv_payments','all',a);showSync('💾 Збережено');}
+
+async function initFromSB(){
+  showSync('⏳ Завантаження...',true);
+  try{
+    const[s,ana,bd,pay,md]=await Promise.all([
+      sbGet('galv_settings','main'),
+      sbGet('galv_analyses','all'),
+      sbGet('galv_breakdowns','all'),
+      sbGet('galv_payments','all'),
+      sbGet('galv_month',`${CY}_${CM}`)
+    ]);
+    if(s)lss('galv_s',JSON.stringify(s));
+    if(ana)lss('galv_ana',JSON.stringify(ana));
+    if(bd)lss('galv_bd',JSON.stringify(bd));
+    if(pay)lss('galv_pay',JSON.stringify(pay));
+    if(md)lss(`galv_${CY}_${CM}`,JSON.stringify(md));
+    showSync('✅ Supabase підключено');
+    renderDays();
+  }catch(e){
+    showSync('⚠️ Офлайн режим',false);
+    renderDays();
+  }
+}
+
+const DEF_CHEM=[
+  {id:'c1',name:'Блискоутворювач MERLIN BRIGHTENER',price:254.82,unit:'кг'},
+  {id:'c2',name:'Основний компонент MERLIN STARTER',price:281.76,unit:'кг'},
+  {id:'c3',name:'Додаток BLUPASS BC',price:220.02,unit:'кг'},
+  {id:'c4',name:'Азотна кислота',price:25.8,unit:'л'},
+  {id:'c5',name:'Кислота соляна',price:40,unit:'л'},
+  {id:'c6',name:'Знежирювач Spectraclean 50',price:192.54,unit:'кг'},
+  {id:'c7',name:'Proseal CR-schwarz Part 1/F',price:550.8,unit:'кг'},
+  {id:'c8',name:'Proseal CR-schwarz Part 2',price:2318.4,unit:'кг'},
+  {id:'c9',name:'Цинк Ц0 в кулях (ІМП)',price:228.96,unit:'кг'},
+  {id:'c10',name:'Топаз корректор',price:479,unit:'л'},
+  {id:'c11',name:'Топаз стабілізатор',price:421,unit:'л'},
+  {id:'c12',name:'Сода',price:57,unit:'кг'},
+  {id:'c13',name:'Добавка до кислоти BEF30',price:430,unit:'л'},
+  {id:'c14',name:'Дистильована вода',price:10,unit:'л'},
+  {id:'c15',name:'Пасивація Unifix',price:396,unit:'кг'},
+];
+const DEF_AT=[
+  {id:'a1',name:'Цинк (г/л)',min:30,max:50,freq:1,unit:'г/л',vatId:''},
+  {id:'a2',name:'Хлорид амонію (г/л)',min:200,max:280,freq:2,unit:'г/л',vatId:''},
+  {id:'a3',name:'pH розчину',min:5.0,max:5.8,freq:1,unit:'pH',vatId:''},
+  {id:'a4',name:'Блискоутворювач (мл/л)',min:0.3,max:0.8,freq:3,unit:'мл/л',vatId:''},
+  {id:'a5',name:'Температура (°C)',min:18,max:35,freq:1,unit:'°C',vatId:''},
+];
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function today(){return new Date().toISOString().slice(0,10)}
+function dIM(y,m){return new Date(y,m+1,0).getDate()}
+function isWE(y,m,d){const w=new Date(y,m,d).getDay();return w===0||w===6}
+function dStr(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+function fv(id){return parseFloat(document.getElementById(id)?.value)||0}
+function gv(id){return document.getElementById(id)?.value||''}
+function oM(id){document.getElementById(id).classList.add('open')}
+function cM(id){document.getElementById(id).classList.remove('open')}
+
+function anaStatus(val,type){const v=parseFloat(val);if(isNaN(v))return 'none';if(v<type.min||v>type.max)return 'err';const r=type.max-type.min;if(v<type.min+r*.1||v>type.max-r*.1)return 'warn';return 'ok';}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('show'));
+    this.classList.add('active');
+    document.getElementById('pg-'+this.dataset.tab).classList.add('show');
+    ({days:renderDays,analysis:renderAnalysis,equipment:renderEquipment,breakdowns:renderBreakdowns,payments:renderPayments,products:renderProducts,summary:renderSummary,settings:renderSettings})[this.dataset.tab]?.();
+  });
+});
+['mDay','mAna','mEq','mAnaType','mProd','mBD','mPay','mEE'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)cM(id);});
+});
+
+function chM(d){
+  CM+=d;if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}
+  document.getElementById('mlabel').textContent=MN[CM]+' '+CY;
+  // reload month from SB on month change
+  sbGet('galv_month',`${CY}_${CM}`).then(md=>{if(md)lss(`galv_${CY}_${CM}`,JSON.stringify(md));const at=document.querySelector('.tab.active');if(at)at.click();});
+}
+
+// ===== DAYS =====
+function renderDays(){
+  document.getElementById('mlabel').textContent=MN[CM]+' '+CY;
+  const s=gS(),data=gMD(CY,CM),days=dIM(CY,CM),ana=gAna();
+  let totKg=0,totCost=0,wDays=0;
+  for(let d=1;d<=days;d++){const dd=data[d];if(!dd||dd.weekend)continue;wDays++;totKg+=(dd.wz||0)+(dd.bz||0);totCost+=dd.totalCost||0;}
+  const seb=totKg>0?(totCost/totKg).toFixed(2):0;
+  const pay=gPay().filter(p=>p.date&&p.date.startsWith(`${CY}-${String(CM+1).padStart(2,'0')}`));
+  const totPay=pay.reduce((a,p)=>a+(parseFloat(p.amount)||0),0);
+  const sebPay=totKg>0?(totPay/totKg).toFixed(2):0;
+  let wdH='',weH='';
+  for(let d=1;d<=days;d++){
+    const dd=data[d]||{},dow=new Date(CY,CM,d).getDay();
+    const wknd=dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);
+    const hasData=dd.wz||dd.bz;
+    const ds=dStr(CY,CM,d);
+    let anaErr=0,anaWarn=0;
+    ana.filter(a=>a.date===ds).forEach(a=>{const at=s.anaTypes.find(t=>t.id===a.typeId);if(!at)return;const st=anaStatus(a.value,at);if(st==='err')anaErr++;else if(st==='warn')anaWarn++;});
+    const hasBD=gBD().some(b=>b.date===ds);
+    let inner=`<div style="display:flex;justify-content:space-between"><span class="dn">${d}</span><span style="font-size:9px;color:#aaa">${DW[dow]}</span></div>`;
+    if(hasBD)inner+=`<div style="font-size:10px;color:#e74c3c">🔧</div>`;
+    if(anaErr>0)inner+=`<div style="font-size:10px;color:#e74c3c">⚠️${anaErr}</div>`;
+    else if(anaWarn>0)inner+=`<div style="font-size:10px;color:#e67e22">⚡${anaWarn}</div>`;
+    if(hasData){const kg=(dd.wz||0)+(dd.bz||0);inner+=`<div class="ds">Покрито: <b>${kg}кг</b></div>`;if(dd.seb)inner+=`<div class="ds"><b>${dd.seb}</b>грн/кг</div>`;}
+    else if(wknd)inner+=`<div class="ds" style="color:#c0392b">Вихідний</div>`;
+    else inner+=`<div class="ds" style="color:#bbb">—</div>`;
+    const card=`<div class="dc${wknd?' we':''}${hasData?' hd':''}" onclick="openDay(${d})">${inner}</div>`;
+    if(dow===0||dow===6)weH+=card;else wdH+=card;
+  }
+  document.getElementById('pg-days').innerHTML=`
+    <div style="display:flex;gap:7px;margin-bottom:9px"><button class="btn bp" onclick="openEEModal()">⚡ ЕЕ/Вода за період</button></div>
+    <div class="krow">
+      <div class="kpi"><div class="kpi-l">Покрито</div><div class="kpi-v">${totKg} кг</div><div class="kpi-s">${wDays} дн.</div></div>
+      <div class="kpi"><div class="kpi-l">Собів.(витрати)</div><div class="kpi-v">${seb} грн/кг</div></div>
+      <div class="kpi"><div class="kpi-l">Собів.(оплати)</div><div class="kpi-v">${sebPay} грн/кг</div></div>
+      <div class="kpi"><div class="kpi-l">Витрати</div><div class="kpi-v">${Math.round(totCost).toLocaleString('uk')} грн</div></div>
+      <div class="kpi"><div class="kpi-l">Оплачено</div><div class="kpi-v">${Math.round(totPay).toLocaleString('uk')} грн</div></div>
+    </div>
+    <div class="cal">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:4px">${['Пн','Вт','Ср','Чт','Пт'].map(n=>`<div class="cl">${n}</div>`).join('')}</div>
+        <div class="wd-grid">${wdH}</div>
+      </div>
+      <div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px">${['Сб','Нд'].map(n=>`<div class="cl" style="color:#c0392b">${n}</div>`).join('')}</div>
+        <div class="we-grid">${weH}</div>
+      </div>
+    </div>`;
+}
+
+let _prodRowIdx=0,_chemRowIdx=0,_selProdIds={};
+function openDay(d){
+  curDay=d;_selProdIds={};
+  const s=gS(),data=gMD(CY,CM),dd=data[d]||{};
+  const wknd=dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);
+  document.getElementById('mDayT').textContent=`${d} ${MN[CM]} ${CY} (${DW[new Date(CY,CM,d).getDay()]})`;
+  _prodRowIdx=0;_chemRowIdx=0;
+  const savedPR=dd.prodRows||[];
+  const savedCR=dd.chemRows||[];
+  let prHtml=savedPR.map((r,i)=>{_prodRowIdx=i+1;return buildProdRow(i,r,s);}).join('');
+  let crHtml=savedCR.map((r,i)=>{_chemRowIdx=i+1;return buildChemRow(i,r,s);}).join('');
+  savedPR.forEach((r,i)=>{if(r.prodId)_selProdIds[i]=r.prodId;});
+  document.getElementById('mDayB').innerHTML=`
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+      <input type="checkbox" id="isWE" ${wknd?'checked':''} onchange="document.getElementById('wf').style.display=this.checked?'none':''">
+      <label for="isWE" style="font-size:13px;color:#c0392b;font-weight:600">Вихідний / Простій</label>
+    </div>
+    <div id="wf" ${wknd?'style="display:none"':''}>
+      <div class="sec">
+        <div class="st">Час роботи</div>
+        <div class="fg g4">
+          <div><label>Початок</label><input type="time" id="tStart" value="${dd.tStart||''}"></div>
+          <div><label>Кінець</label><input type="time" id="tEnd" value="${dd.tEnd||''}"></div>
+          <div><label>Оператор</label><input type="text" id="operator" value="${dd.operator||''}"></div>
+          <div><label>Примітка</label><input type="text" id="dayNote" value="${dd.notes||''}"></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st">Вироби / Виробіток</div>
+        <table class="prtbl"><thead><tr><th style="width:35%">Виріб</th><th>Бараб.</th><th>кг</th><th>Тип</th><th>Примітка</th><th></th></tr></thead>
+        <tbody id="prBody">${prHtml}</tbody></table>
+        <button class="btn bsuc bsm" onclick="addProdRow()">+ Виріб</button>
+        <div style="margin-top:5px;font-size:12px;color:#1a3a5c">Загалом: <b id="totKgDisp">—</b> кг (покр.: <b id="coatKgDisp">—</b>, перепокр.: <b id="recoatKgDisp">—</b>)</div>
+      </div>
+      <div class="sec">
+        <div class="st">Хімія по ваннах</div>
+        <table class="chtbl"><thead><tr><th style="width:35%">Хімікат</th><th style="width:25%">Ванна</th><th>Ціна</th><th>Кількість</th><th>Сума</th><th></th></tr></thead>
+        <tbody id="chBody">${crHtml}</tbody></table>
+        <button class="btn bsuc bsm" onclick="addChemRow()">+ Хімія</button>
+        <div style="margin-top:5px;font-size:12px">Разом хімія: <b id="chemTotDisp" style="color:#c0392b">—</b> грн</div>
+      </div>
+      <div class="sec">
+        <div class="st">ЕЕ, Вода, ЗП</div>
+        <div class="fg g4">
+          <div><label>ЕЕ кВт·год</label><input type="number" id="eeKwh" value="${dd.eeKwh||''}" oninput="calcEE()"></div>
+          <div><label>Тариф ЕЕ</label><input type="number" id="eeRate" step="0.01" value="${dd.eeRate!==undefined?dd.eeRate:gS().eeRate}" oninput="calcEE()"></div>
+          <div><label>Вода м³</label><input type="number" id="wtr" value="${dd.water||''}" oninput="calcEE()"></div>
+          <div><label>Тариф вода</label><input type="number" id="wtrRate" step="0.01" value="${dd.waterRate||gS().waterRate}" oninput="calcEE()"></div>
+        </div>
+        <div style="font-size:12px;color:#555" id="eeDisp"></div>
+        <div class="fg g2" style="margin-top:7px">
+          <div><label>ЗП (грн)</label><input type="number" id="wage" value="${dd.wage||''}"></div>
+          <div><label>Інші витрати (грн)</label><input type="number" id="other" value="${dd.other||''}"></div>
+        </div>
+      </div>
+    </div>`;
+  oM('mDay');calcProdTotals();calcChemTotal();calcEE();
+}
+
+function buildProdRow(i,r,s){
+  const name=r&&r.prodId?(s.products.find(p=>p.id===r.prodId)||{}).name||'':'';
+  return `<tr id="pr_${i}">
+    <td><div class="srchbox"><input type="text" id="prSearch_${i}" placeholder="Пошук..." value="${name}" oninput="filterProd(${i})" onfocus="showProdDrop(${i})" autocomplete="off">
+    <div class="sdrop" id="prDrop_${i}"></div></div></td>
+    <td><input type="number" id="prDr_${i}" min="1" value="${r?r.drums:1}" style="width:50px" oninput="onProdChange(${i})"></td>
+    <td><input type="number" id="prKg_${i}" step="0.1" value="${r?r.kg:''}" style="width:55px" oninput="calcProdTotals()"></td>
+    <td><select id="prType_${i}" style="font-size:11px"><option value="coat" ${!r||!r.recoat?'selected':''}>Покриття</option><option value="recoat" ${r&&r.recoat?'selected':''}>Перепокр.</option></select></td>
+    <td><input type="text" id="prNote_${i}" value="${r?r.notes||'':''}" style="font-size:11px"></td>
+    <td><button class="btn bd2 bsm" onclick="document.getElementById('pr_${i}').remove();calcProdTotals()">✕</button></td>
+  </tr>`;
+}
+function buildChemRow(i,r,s){
+  const chemOpts=s.chem.map(c=>`<option value="${c.id}" ${r&&r.chemId===c.id?'selected':''}>${c.name}</option>`).join('');
+  const eqOpts=['<option value="">—</option>',...s.equipment.map(e=>`<option value="${e.id}" ${r&&r.vatId===e.id?'selected':''}>${e.name}</option>`)].join('');
+  return `<tr id="cr_${i}">
+    <td><select id="crChem_${i}" style="font-size:11px" onchange="onChemChange(${i})">${chemOpts}</select></td>
+    <td><select id="crVat_${i}" style="font-size:11px">${eqOpts}</select></td>
+    <td><input type="number" id="crPrice_${i}" step="0.01" value="${r?r.price:''}" style="width:65px" oninput="calcChemTotal()"></td>
+    <td><input type="number" id="crQty_${i}" step="0.01" value="${r?r.qty:''}" style="width:60px" oninput="calcChemTotal()"></td>
+    <td style="font-weight:700;color:#c0392b;font-size:11px" id="crSum_${i}"></td>
+    <td><button class="btn bd2 bsm" onclick="document.getElementById('cr_${i}').remove();calcChemTotal()">✕</button></td>
+  </tr>`;
+}
+function addProdRow(){const i=_prodRowIdx++;document.getElementById('prBody').insertAdjacentHTML('beforeend',buildProdRow(i,null,gS()));}
+function addChemRow(){const i=_chemRowIdx++;document.getElementById('chBody').insertAdjacentHTML('beforeend',buildChemRow(i,null,gS()));}
+
+function showProdDrop(i){
+  const s=gS();const drop=document.getElementById('prDrop_'+i);if(!drop)return;
+  drop.innerHTML=s.products.map(p=>`<div class="sitem" onclick="selectProd(${i},'${p.id}')">${p.name}${p.deloProNum?' ('+p.deloProNum+')':''}</div>`).join('');
+  drop.classList.add('open');
+}
+function filterProd(i){
+  const s=gS();const q=gv('prSearch_'+i).toLowerCase();const drop=document.getElementById('prDrop_'+i);if(!drop)return;
+  drop.innerHTML=s.products.filter(p=>p.name.toLowerCase().includes(q)||((p.deloProNum||'').toLowerCase().includes(q))).map(p=>`<div class="sitem" onclick="selectProd(${i},'${p.id}')">${p.name}${p.deloProNum?' ('+p.deloProNum+')':''}</div>`).join('');
+  drop.classList.add('open');
+}
+function selectProd(i,prodId){
+  const s=gS();const p=s.products.find(x=>x.id===prodId);
+  _selProdIds[i]=prodId;
+  const inp=document.getElementById('prSearch_'+i);if(inp&&p)inp.value=p.name;
+  const drop=document.getElementById('prDrop_'+i);if(drop)drop.classList.remove('open');
+  onProdChange(i);
+}
+function onProdChange(i){
+  const s=gS();const prodId=_selProdIds[i];if(!prodId)return;
+  const p=s.products.find(x=>x.id===prodId);if(!p||!p.drumLoad)return;
+  const kgEl=document.getElementById('prKg_'+i);
+  if(kgEl)kgEl.value=(p.drumLoad*(fv('prDr_'+i)||1)).toFixed(1);
+  calcProdTotals();
+}
+document.addEventListener('click',function(e){if(!e.target.closest('.srchbox'))document.querySelectorAll('.sdrop').forEach(d=>d.classList.remove('open'));});
+
+function onChemChange(i){
+  const s=gS();const c=s.chem.find(x=>x.id===gv('crChem_'+i));
+  if(c){const el=document.getElementById('crPrice_'+i);if(el)el.value=c.price;}
+  calcChemTotal();
+}
+function calcProdTotals(){
+  let tot=0,coat=0,recoat=0;
+  document.querySelectorAll('#prBody tr').forEach(row=>{
+    const i=row.id.replace('pr_','');const kg=fv('prKg_'+i)||0;
+    tot+=kg;if(gv('prType_'+i)==='recoat')recoat+=kg;else coat+=kg;
+  });
+  const t=document.getElementById('totKgDisp'),c=document.getElementById('coatKgDisp'),r=document.getElementById('recoatKgDisp');
+  if(t)t.textContent=tot.toFixed(1);if(c)c.textContent=coat.toFixed(1);if(r)r.textContent=recoat.toFixed(1);
+}
+function calcChemTotal(){
+  let tot=0;
+  document.querySelectorAll('#chBody tr').forEach(row=>{
+    const i=row.id.replace('cr_','');const p=fv('crPrice_'+i),q=fv('crQty_'+i),sum=+(p*q).toFixed(2);
+    const el=document.getElementById('crSum_'+i);if(el)el.textContent=q?sum.toLocaleString('uk'):'';tot+=sum;
+  });
+  const el=document.getElementById('chemTotDisp');if(el)el.textContent=tot>0?tot.toFixed(2):'—';
+}
+function calcEE(){
+  const ee=(fv('eeKwh')*fv('eeRate')).toFixed(2),wc=(fv('wtr')*fv('wtrRate')).toFixed(2);
+  const el=document.getElementById('eeDisp');if(el)el.textContent=`ЕЕ: ${ee} грн | Вода: ${wc} грн`;
+}
+function getProdRows(){
+  const s=gS();const rows=[];
+  document.querySelectorAll('#prBody tr').forEach(row=>{
+    const i=row.id.replace('pr_','');
+    const prodId=_selProdIds[i]||(()=>{const name=gv('prSearch_'+i);const p=s.products.find(x=>x.name===name);return p?p.id:'';})();
+    rows.push({prodId,drums:fv('prDr_'+i),kg:fv('prKg_'+i),recoat:gv('prType_'+i)==='recoat',notes:gv('prNote_'+i)});
+  });
+  return rows;
+}
+function getChemRows(){
+  const rows=[];
+  document.querySelectorAll('#chBody tr').forEach(row=>{
+    const i=row.id.replace('cr_','');
+    rows.push({chemId:gv('crChem_'+i),vatId:gv('crVat_'+i),price:fv('crPrice_'+i),qty:fv('crQty_'+i)});
+  });
+  return rows;
+}
+async function saveDay(){
+  const wknd=document.getElementById('isWE')?.checked;const data=gMD(CY,CM);
+  if(wknd){data[curDay]={weekend:true};await sMD(CY,CM,data);cM('mDay');renderDays();return;}
+  const s=gS();const prodRows=getProdRows();const chemRows=getChemRows();
+  let wz=0,bz=0,rwz=0,rbz=0;
+  prodRows.forEach(r=>{const p=s.products.find(x=>x.id===r.prodId);const isB=p&&p.coatingType==='black';if(r.recoat){if(isB)rbz+=r.kg;else rwz+=r.kg;}else{if(isB)bz+=r.kg;else wz+=r.kg;}});
+  const chemTotal=chemRows.reduce((a,r)=>a+r.price*r.qty,0);
+  const eeKwh=fv('eeKwh'),eeRate=fv('eeRate')||s.eeRate,eeCost=+(eeKwh*eeRate).toFixed(2);
+  const wtr=fv('wtr'),wtrRate=fv('wtrRate')||s.waterRate,wtrCost=+(wtr*wtrRate).toFixed(2);
+  const wage=fv('wage'),other=fv('other');
+  const totalCost=+chemTotal.toFixed(2)+eeCost+wtrCost+wage+other;
+  const kg=wz+bz+rwz+rbz;const seb=kg>0?+(totalCost/kg).toFixed(2):0;
+  data[curDay]={weekend:false,wz,bz,recoatWz:rwz,recoatBz:rbz,prodRows,chemRows,
+    tStart:gv('tStart'),tEnd:gv('tEnd'),operator:gv('operator'),notes:gv('dayNote'),
+    eeKwh,eeRate,eeCost,water:wtr,waterRate:wtrRate,waterCost:wtrCost,
+    wage,other,chemTotal:+chemTotal.toFixed(2),totalCost,seb};
+  await sMD(CY,CM,data);cM('mDay');renderDays();
+}
+async function clearDay(){if(!confirm('Очистити?'))return;const data=gMD(CY,CM);delete data[curDay];await sMD(CY,CM,data);cM('mDay');renderDays();}
+
+let eeSelDays=new Set();
+function openEEModal(){
+  const days=dIM(CY,CM),data=gMD(CY,CM);eeSelDays=new Set();
+  for(let d=1;d<=days;d++){const dd=data[d];const wknd=dd&&dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);if(!wknd)eeSelDays.add(d);}
+  renderEEM();oM('mEE');
+}
+function renderEEM(){
+  const s=gS(),days=dIM(CY,CM),data=gMD(CY,CM);let btns='';
+  for(let d=1;d<=days;d++){
+    const dd=data[d];const wknd=dd&&dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);
+    if(wknd){btns+=`<div style="width:32px;height:32px;border-radius:4px;background:#fff0f0;border:1px solid #f5b7b1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#c0392b">${d}</div>`;continue;}
+    const sel=eeSelDays.has(d);
+    btns+=`<div style="width:32px;height:32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:${sel?'#1a3a5c':'#f0f2f5'};color:${sel?'#fff':'#555'};border:1px solid ${sel?'#1a3a5c':'#dde'}" onclick="toggleED(${d})">${d}</div>`;
+  }
+  document.getElementById('mEEB').innerHTML=`
+    <p style="font-size:12px;color:#666;margin-bottom:10px">Вихідні ігноруються. Розподіл по вибраних робочих днях.</p>
+    <div class="fg g3"><div><label>ЕЕ початок (кВт)</label><input type="number" id="eeS"></div><div><label>ЕЕ кінець (кВт)</label><input type="number" id="eeE"></div><div><label>Тариф ЕЕ</label><input type="number" id="eeT" value="${s.eeRate}" step="0.01"></div></div>
+    <div class="fg g3"><div><label>Вода початок (м³)</label><input type="number" id="wS"></div><div><label>Вода кінець (м³)</label><input type="number" id="wE"></div><div><label>Тариф вода</label><input type="number" id="wT" value="${s.waterRate}" step="0.01"></div></div>
+    <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:5px">Робочі дні (${eeSelDays.size}):</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${btns}</div>`;
+}
+function toggleED(d){if(eeSelDays.has(d))eeSelDays.delete(d);else eeSelDays.add(d);renderEEM();}
+async function saveEEP(){
+  const n=eeSelDays.size;if(!n){alert('Виберіть дні');return;}
+  const eeTotal=Math.max(0,fv('eeE')-fv('eeS')),wTotal=Math.max(0,fv('wE')-fv('wS'));
+  const eeD=+(eeTotal/n).toFixed(4),wD=+(wTotal/n).toFixed(4),eeT=fv('eeT'),wT=fv('wT');
+  const data=gMD(CY,CM);
+  eeSelDays.forEach(d=>{
+    if(!data[d])data[d]={};if(data[d].weekend)return;
+    data[d].eeKwh=eeD;data[d].eeRate=eeT;data[d].eeCost=+(eeD*eeT).toFixed(2);
+    data[d].water=wD;data[d].waterRate=wT;data[d].waterCost=+(wD*wT).toFixed(2);
+    const dd=data[d];dd.totalCost=(dd.chemTotal||0)+(dd.eeCost||0)+(dd.waterCost||0)+(dd.wage||0)+(dd.other||0);
+    const kg=(dd.wz||0)+(dd.bz||0);dd.seb=kg>0?+(dd.totalCost/kg).toFixed(2):0;
+  });
+  await sMD(CY,CM,data);cM('mEE');renderDays();alert(`Розподілено по ${n} робочих днях`);
+}
+
+// ===== ANALYSIS =====
+function renderAnalysis(){
+  const s=gS(),ana=gAna(),now=new Date();now.setHours(0,0,0,0);const days=dIM(CY,CM);
+  let alertsH='';
+  s.anaTypes.forEach(at=>{
+    const typed=ana.filter(a=>a.typeId===at.id&&(!at.vatId||a.vatId===at.vatId)).sort((a,b)=>b.date.localeCompare(a.date));
+    const last=typed[0];const vn=at.vatId?(s.equipment.find(e=>e.id===at.vatId)?.name||''):'';
+    const label=at.name+(vn?` (${vn})`:'');
+    if(!last){alertsH+=`<div class="abox ae">⚠️ Ніколи: <b>${label}</b></div>`;return;}
+    const diff=Math.floor((now-new Date(last.date))/86400000);
+    if(diff>=at.freq)alertsH+=`<div class="abox ae">❌ Прострочено ${diff}дн: <b>${label}</b></div>`;
+    else if(diff>=at.freq-1)alertsH+=`<div class="abox aw">🔔 Завтра: <b>${label}</b></div>`;
+  });
+  if(!alertsH)alertsH=`<div class="abox aok">✅ Всі аналізи актуальні</div>`;
+  let schedH=`<div class="bar-wrap"><div style="font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:8px">Графік — ${MN[CM]} ${CY}</div>`;
+  schedH+=`<div style="display:flex;gap:3px;margin-left:184px;margin-bottom:3px">`;
+  for(let d=1;d<=days;d++)schedH+=`<div class="adn">${d}</div>`;
+  schedH+='</div>';
+  s.anaTypes.forEach(at=>{
+    const vn=at.vatId?(s.equipment.find(e=>e.id===at.vatId)?.name||''):'';
+    const fullName=at.name+(vn?` / ${vn}`:'');
+    const allT=ana.filter(a=>a.typeId===at.id&&(!at.vatId||a.vatId===at.vatId)).sort((a,b)=>a.date.localeCompare(b.date));
+    schedH+=`<div class="asc-row"><div class="asc-name" title="${fullName}">${fullName}</div>`;
+    for(let d=1;d<=days;d++){
+      const ds=dStr(CY,CM,d);const da=allT.filter(a=>a.date===ds);
+      let cls='',txt='';
+      if(da.length>0){const st=anaStatus(da[0].value,at);cls='d'+st;txt=st==='ok'?'✓':st==='err'?'!':'~';}
+      else{const last=allT.filter(a=>a.date<ds).pop();if(last){const diff=Math.floor((new Date(ds)-new Date(last.date))/86400000);if(diff>=at.freq)cls='ov';else if(diff===at.freq-1)cls='pl';}else if(d===1)cls='pl';}
+      schedH+=`<div class="adc ${cls}" title="${ds}">${txt}</div>`;
+    }
+    schedH+='</div>';
+  });
+  schedH+=`<div style="display:flex;gap:10px;margin-top:8px;font-size:10px;flex-wrap:wrap">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#d5f5e3;border:1px solid #a9dfbf;border-radius:2px"></span> Норма</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#fef9e7;border:1px solid #f9e79f;border-radius:2px"></span> Увага</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#fadbd8;border:1px solid #f5b7b1;border-radius:2px"></span> Відхил./Прострочено</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#d6eaf8;border:1px solid #a9cce3;border-radius:2px"></span> Заплановано</span>
+  </div></div>`;
+  const sorted=[...ana].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,60);
+  let hist=`<table class="tbl"><thead><tr><th>Дата</th><th>Тип</th><th>Ванна</th><th class="r">Значення</th><th>Статус</th><th>Примітка</th><th></th></tr></thead><tbody>`;
+  sorted.forEach(a=>{
+    const at=s.anaTypes.find(t=>t.id===a.typeId);if(!at)return;
+    const st=anaStatus(a.value,at);const eq=a.vatId?(s.equipment.find(e=>e.id===a.vatId)?.name||''):'';
+    hist+=`<tr class="${st==='err'?'erow':st==='warn'?'wrow':''}"><td>${a.date}</td><td style="font-size:11px">${at.name}</td><td>${eq||'—'}</td>
+      <td class="r"><span class="av ${st}">${a.value} ${at.unit}</span></td>
+      <td><span class="badge ${st==='ok'?'bok':st==='warn'?'bwn':st==='err'?'berr':'bgr'}">${st==='ok'?'Норма':st==='warn'?'Увага':st==='err'?'Відхил':'—'}</span></td>
+      <td style="font-size:11px;color:#888">${a.notes||''}</td>
+      <td><button class="btn bdef bsm" onclick="openAnaModal('${a.id}')">✏️</button><button class="btn bd2 bsm" onclick="delAna('${a.id}')">✕</button></td></tr>`;
+  });
+  hist+='</tbody></table>';
+  document.getElementById('pg-analysis').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="font-size:14px;color:#1a3a5c">🔬 Аналізи</h3>
+      <button class="btn bp" onclick="openAnaModal(null)">+ Новий аналіз</button>
+    </div>
+    <div style="margin-bottom:10px">${alertsH}</div>${schedH}
+    <div style="font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:6px">Журнал</div>${hist}`;
+}
+function openAnaModal(id,preType,preVat){
+  editIds.ana=id;const s=gS(),ana=gAna(),a=id?ana.find(x=>x.id===id):null;
+  document.getElementById('mAnaT').textContent=id?'Редагувати':'Новий аналіз';
+  const tOpts=s.anaTypes.map(t=>`<option value="${t.id}" ${(a?.typeId||preType)===t.id?'selected':''}>${t.name}</option>`).join('');
+  const eOpts=['<option value="">—</option>',...s.equipment.map(e=>`<option value="${e.id}" ${(a?.vatId||preVat)===e.id?'selected':''}>${e.name}</option>`)].join('');
+  document.getElementById('mAnaB').innerHTML=`
+    <div class="fg g2"><div><label>Дата</label><input type="date" id="aD" value="${a?.date||today()}"></div>
+    <div><label>Тип</label><select id="aT" oninput="previewAna()">${tOpts}</select></div></div>
+    <div class="fg g2"><div><label>Ванна</label><select id="aV">${eOpts}</select></div>
+    <div><label>Значення</label><input type="number" id="aVal" step="0.01" value="${a?.value||''}" oninput="previewAna()"></div></div>
+    <div id="aPrev" style="margin-bottom:8px"></div>
+    <div><label>Примітка</label><textarea id="aN" rows="2">${a?.notes||''}</textarea></div>`;
+  oM('mAna');previewAna();
+}
+function previewAna(){
+  const s=gS(),at=s.anaTypes.find(t=>t.id===gv('aT')),val=gv('aVal');
+  const el=document.getElementById('aPrev');if(!el)return;if(!at||!val){el.innerHTML='';return;}
+  const st=anaStatus(val,at);const bg={ok:'#d5f5e3',warn:'#fef9e7',err:'#fadbd8'}[st]||'';
+  const msg={ok:`✅ В нормі (${at.min}–${at.max} ${at.unit})`,warn:'⚠️ Близько до межі',err:'❌ Поза нормою!'}[st]||'';
+  el.innerHTML=msg?`<div style="background:${bg};padding:6px 9px;border-radius:5px;font-size:12px">${msg}</div>`:'';
+}
+async function saveAna(){
+  const ana=gAna();
+  const obj={id:editIds.ana||uid(),date:gv('aD'),typeId:gv('aT'),vatId:gv('aV'),value:gv('aVal'),notes:gv('aN')};
+  if(editIds.ana){const i=ana.findIndex(a=>a.id===editIds.ana);if(i>=0)ana[i]=obj;}else ana.push(obj);
+  await sAna(ana);cM('mAna');renderAnalysis();
+}
+async function delAna(id){if(!confirm('Видалити?'))return;await sAna(gAna().filter(a=>a.id!==id));renderAnalysis();}
+
+// ===== EQUIPMENT =====
+function renderEquipment(){
+  const s=gS(),ana=gAna();
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 style="font-size:14px;color:#1a3a5c">🏭 Ванни</h3><button class="btn bp" onclick="openEqModal(null)">+ Ванна</button>
+  </div>`;
+  s.equipment.forEach(eq=>{
+    const eqA=ana.filter(a=>a.vatId===eq.id).sort((a,b)=>b.date.localeCompare(a.date));
+    html+=`<div class="eqcard"><div class="eqh"><div class="eqico">🛁</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">${eq.name}</div>
+      <div style="font-size:11px;color:#888">Об'єм: ${eq.volume||'—'}л · ${eq.coating||'—'} · ${eq.amperage||'—'}А / ${eq.voltage||'—'}В</div>
+      ${eq.notes?`<div style="font-size:11px;color:#aaa;margin-top:2px">${eq.notes}</div>`:''}
+      <div style="font-size:11px;color:#888;margin-top:2px">Аналізів: ${eqA.length} · Останній: ${eqA[0]?.date||'—'}</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn bp bsm" onclick="openAnaModal(null,null,'${eq.id}')">+ Аналіз</button>
+        <button class="btn bdef bsm" onclick="openEqModal('${eq.id}')">✏️</button>
+        <button class="btn bd2 bsm" onclick="delEq('${eq.id}')">✕</button>
+      </div></div></div>`;
+  });
+  html+=`<div style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+    <div style="font-size:12px;font-weight:600;color:#1a3a5c">⚗️ Типи аналізів</div>
+    <button class="btn bp bsm" onclick="openATModal(null)">+ Тип</button>
+  </div>
+  <table class="tbl"><thead><tr><th>Назва</th><th>Норма</th><th>Частота</th><th>Ванна</th><th>Примітка</th><th></th></tr></thead><tbody>`;
+  s.anaTypes.forEach(at=>{
+    const vn=at.vatId?(s.equipment.find(e=>e.id===at.vatId)?.name||'?'):'Всі';
+    html+=`<tr><td>${at.name}</td><td>${at.min}–${at.max} ${at.unit}</td><td>${at.freq}дн.</td><td>${vn}</td>
+      <td style="font-size:11px;color:#888">${at.notes||''}</td>
+      <td><button class="btn bdef bsm" onclick="openATModal('${at.id}')">✏️</button><button class="btn bd2 bsm" onclick="delAT('${at.id}')">✕</button></td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('pg-equipment').innerHTML=html;
+}
+function openEqModal(id){
+  editIds.eq=id;const s=gS(),eq=id?s.equipment.find(e=>e.id===id):null;
+  document.getElementById('mEqT').textContent=id?'Редагувати ванну':'Нова ванна';
+  document.getElementById('mEqB').innerHTML=`
+    <div class="fg g2"><div><label>Назва</label><input type="text" id="eqN" value="${eq?.name||''}"></div><div><label>Тип покриття</label><input type="text" id="eqC" value="${eq?.coating||''}"></div></div>
+    <div class="fg g3"><div><label>Об'єм (л)</label><input type="number" id="eqV" value="${eq?.volume||''}"></div><div><label>Струм (А)</label><input type="number" id="eqA" value="${eq?.amperage||''}"></div><div><label>Напруга (В)</label><input type="number" id="eqVolt" value="${eq?.voltage||''}"></div></div>
+    <div><label>Примітка</label><textarea id="eqNote" rows="2">${eq?.notes||''}</textarea></div>`;
+  document.getElementById('mEqSave').onclick=saveEq;oM('mEq');
+}
+async function saveEq(){
+  const s=gS();if(!s.equipment)s.equipment=[];
+  const obj={id:editIds.eq||uid(),name:gv('eqN'),coating:gv('eqC'),volume:fv('eqV'),amperage:fv('eqA'),voltage:fv('eqVolt'),notes:gv('eqNote')};
+  if(editIds.eq){const i=s.equipment.findIndex(e=>e.id===editIds.eq);if(i>=0)s.equipment[i]=obj;}else s.equipment.push(obj);
+  await sS(s);cM('mEq');renderEquipment();
+}
+async function delEq(id){if(!confirm('Видалити?'))return;const s=gS();s.equipment=s.equipment.filter(e=>e.id!==id);await sS(s);renderEquipment();}
+function openATModal(id){
+  editIds.at=id;const s=gS(),at=id?s.anaTypes.find(t=>t.id===id):null;
+  document.getElementById('mATT').textContent=id?'Редагувати тип':'Новий тип аналізу';
+  const eOpts=['<option value="">Всі ванни</option>',...s.equipment.map(e=>`<option value="${e.id}" ${at?.vatId===e.id?'selected':''}>${e.name}</option>`)].join('');
+  document.getElementById('mATB').innerHTML=`
+    <div class="fg g2"><div><label>Назва</label><input type="text" id="atN" value="${at?.name||''}"></div><div><label>Одиниця</label><input type="text" id="atU" value="${at?.unit||''}"></div></div>
+    <div class="fg g4"><div><label>Мін</label><input type="number" id="atMin" step="0.01" value="${at?.min||''}"></div><div><label>Макс</label><input type="number" id="atMax" step="0.01" value="${at?.max||''}"></div><div><label>Частота (дн.)</label><input type="number" id="atF" value="${at?.freq||1}"></div><div><label>Ванна</label><select id="atV">${eOpts}</select></div></div>
+    <div><label>Примітка</label><textarea id="atNote" rows="2">${at?.notes||''}</textarea></div>`;
+  oM('mAnaType');
+}
+async function saveAnaType(){
+  const s=gS();
+  const obj={id:editIds.at||uid(),name:gv('atN'),unit:gv('atU'),min:parseFloat(gv('atMin'))||0,max:parseFloat(gv('atMax'))||0,freq:parseInt(gv('atF'))||1,vatId:gv('atV'),notes:gv('atNote')};
+  if(editIds.at){const i=s.anaTypes.findIndex(t=>t.id===editIds.at);if(i>=0)s.anaTypes[i]=obj;}else s.anaTypes.push(obj);
+  await sS(s);cM('mAnaType');renderEquipment();
+}
+async function delAT(id){if(!confirm('Видалити?'))return;const s=gS();s.anaTypes=s.anaTypes.filter(t=>t.id!==id);await sS(s);renderEquipment();}
+
+// ===== BREAKDOWNS =====
+function renderBreakdowns(){
+  const s=gS(),bds=gBD().sort((a,b)=>b.date.localeCompare(a.date));
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 style="font-size:14px;color:#1a3a5c">🔧 Поломки</h3><button class="btn bwarn" onclick="openBDModal(null)">+ Поломка</button>
+  </div>
+  <table class="tbl"><thead><tr><th>Дата</th><th>Обладнання</th><th>Опис</th><th>Статус</th><th class="r">Вартість</th><th>Примітка</th><th></th></tr></thead><tbody>`;
+  if(!bds.length)html+='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">Поломок немає</td></tr>';
+  bds.forEach(b=>{
+    const eq=s.equipment.find(e=>e.id===b.eqId);
+    const sb={open:'<span class="badge berr">Відкрита</span>',fixed:'<span class="badge bok">Усунена</span>',pending:'<span class="badge bwn">В роботі</span>'}[b.status]||'';
+    html+=`<tr><td>${b.date}</td><td>${eq?.name||'—'}</td><td>${b.desc||''}</td><td>${sb}</td><td class="r">${b.cost?b.cost+' грн':''}</td><td style="font-size:11px;color:#888">${b.notes||''}</td>
+      <td><button class="btn bdef bsm" onclick="openBDModal('${b.id}')">✏️</button><button class="btn bd2 bsm" onclick="delBD('${b.id}')">✕</button></td></tr>`;
+  });
+  html+='</tbody></table>';document.getElementById('pg-breakdowns').innerHTML=html;
+}
+function openBDModal(id){
+  editIds.bd=id;const s=gS(),bds=gBD(),b=id?bds.find(x=>x.id===id):null;
+  document.getElementById('mBDT').textContent=id?'Редагувати':'Нова поломка';
+  const eOpts=['<option value="">—</option>',...s.equipment.map(e=>`<option value="${e.id}" ${b?.eqId===e.id?'selected':''}>${e.name}</option>`)].join('');
+  document.getElementById('mBDB').innerHTML=`
+    <div class="fg g3"><div><label>Дата</label><input type="date" id="bdD" value="${b?.date||today()}"></div><div><label>Обладнання</label><select id="bdEq">${eOpts}</select></div>
+    <div><label>Статус</label><select id="bdSt"><option value="open" ${!b||b.status==='open'?'selected':''}>Відкрита</option><option value="pending" ${b?.status==='pending'?'selected':''}>В роботі</option><option value="fixed" ${b?.status==='fixed'?'selected':''}>Усунена</option></select></div></div>
+    <div><label>Опис</label><textarea id="bdDesc" rows="3">${b?.desc||''}</textarea></div>
+    <div class="fg g2"><div><label>Вартість (грн)</label><input type="number" id="bdCost" value="${b?.cost||''}"></div><div><label>Примітка</label><input type="text" id="bdNote" value="${b?.notes||''}"></div></div>`;
+  oM('mBD');
+}
+async function saveBD(){
+  const bds=gBD();
+  const obj={id:editIds.bd||uid(),date:gv('bdD'),eqId:gv('bdEq'),status:gv('bdSt'),desc:gv('bdDesc'),cost:fv('bdCost')||'',notes:gv('bdNote')};
+  if(editIds.bd){const i=bds.findIndex(b=>b.id===editIds.bd);if(i>=0)bds[i]=obj;}else bds.push(obj);
+  await sBDsave(bds);cM('mBD');renderBreakdowns();
+}
+async function delBD(id){if(!confirm('Видалити?'))return;await sBDsave(gBD().filter(b=>b.id!==id));renderBreakdowns();}
+
+// ===== PAYMENTS =====
+const PAY_CATS=['Хімія','Матеріали','ЗП','ЕЕ','Вода','Оренда','Обслуговування','Інше'];
+function renderPayments(){
+  const pays=gPay().filter(p=>{const ym=`${CY}-${String(CM+1).padStart(2,'0')}`;return p.date&&p.date.startsWith(ym);}).sort((a,b)=>b.date.localeCompare(a.date));
+  const totPay=pays.reduce((a,p)=>a+(parseFloat(p.amount)||0),0);
+  const data=gMD(CY,CM),days=dIM(CY,CM);let totCost=0,totKg=0;
+  for(let d=1;d<=days;d++){const dd=data[d];if(!dd||dd.weekend)continue;totCost+=dd.totalCost||0;totKg+=(dd.wz||0)+(dd.bz||0);}
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 style="font-size:14px;color:#1a3a5c">💰 Оплати — ${MN[CM]}</h3><button class="btn bsuc" onclick="openPayModal(null)">+ Оплата</button>
+  </div>
+  <div class="krow" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-l">Оплачено</div><div class="kpi-v">${Math.round(totPay).toLocaleString('uk')} грн</div></div>
+    <div class="kpi"><div class="kpi-l">Витрати (розрах.)</div><div class="kpi-v">${Math.round(totCost).toLocaleString('uk')} грн</div></div>
+    <div class="kpi"><div class="kpi-l">Різниця</div><div class="kpi-v" style="color:${totPay>=totCost?'#27ae60':'#e74c3c'}">${(totPay-totCost).toFixed(0)} грн</div></div>
+    <div class="kpi"><div class="kpi-l">Собів.(оплати)</div><div class="kpi-v">${totKg>0?(totPay/totKg).toFixed(2):0} грн/кг</div></div>
+  </div>
+  <table class="tbl"><thead><tr><th>Дата</th><th>Категорія</th><th>Контрагент</th><th class="r">Сума</th><th>Документ</th><th>Примітка</th><th></th></tr></thead><tbody>`;
+  if(!pays.length)html+='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">Оплат немає</td></tr>';
+  pays.forEach(p=>{
+    html+=`<tr><td>${p.date}</td><td>${p.category||'—'}</td><td>${p.counterparty||'—'}</td><td class="r" style="font-weight:600">${parseFloat(p.amount||0).toLocaleString('uk')}</td>
+      <td style="font-size:11px">${p.document||''}</td><td style="font-size:11px;color:#888">${p.notes||''}</td>
+      <td><button class="btn bdef bsm" onclick="openPayModal('${p.id}')">✏️</button><button class="btn bd2 bsm" onclick="delPay('${p.id}')">✕</button></td></tr>`;
+  });
+  html+='</tbody></table>';document.getElementById('pg-payments').innerHTML=html;
+}
+function openPayModal(id){
+  editIds.pay=id;const pays=gPay(),p=id?pays.find(x=>x.id===id):null;
+  document.getElementById('mPayT').textContent=id?'Редагувати':'Нова оплата';
+  document.getElementById('mPayB').innerHTML=`
+    <div class="fg g3"><div><label>Дата</label><input type="date" id="pyD" value="${p?.date||today()}"></div><div><label>Категорія</label><select id="pyCat">${PAY_CATS.map(c=>`<option ${p?.category===c?'selected':''}>${c}</option>`).join('')}</select></div><div><label>Сума (грн)</label><input type="number" id="pyAmt" value="${p?.amount||''}" step="0.01"></div></div>
+    <div class="fg g2"><div><label>Контрагент</label><input type="text" id="pyCp" value="${p?.counterparty||''}"></div><div><label>Документ</label><input type="text" id="pyDoc" value="${p?.document||''}"></div></div>
+    <div><label>Примітка</label><textarea id="pyN" rows="2">${p?.notes||''}</textarea></div>`;
+  oM('mPay');
+}
+async function savePay(){
+  const pays=gPay();
+  const obj={id:editIds.pay||uid(),date:gv('pyD'),category:gv('pyCat'),amount:fv('pyAmt'),counterparty:gv('pyCp'),document:gv('pyDoc'),notes:gv('pyN')};
+  if(editIds.pay){const i=pays.findIndex(p=>p.id===editIds.pay);if(i>=0)pays[i]=obj;}else pays.push(obj);
+  await sPaySave(pays);cM('mPay');renderPayments();
+}
+async function delPay(id){if(!confirm('Видалити?'))return;await sPaySave(gPay().filter(p=>p.id!==id));renderPayments();}
+
+// ===== PRODUCTS =====
+function renderProducts(){
+  const s=gS();
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 style="font-size:14px;color:#1a3a5c">📦 Вироби</h3><button class="btn bp" onclick="openProdModal(null)">+ Виріб</button>
+  </div>
+  <table class="tbl"><thead><tr><th>Назва</th><th>ДелоПро №</th><th>Покриття</th><th class="r">Барабан кг</th><th class="r">А</th><th class="r">В</th><th class="r">Хв</th><th>Примітка</th><th></th></tr></thead><tbody>`;
+  if(!s.products.length)html+='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:16px">Виробів немає</td></tr>';
+  s.products.forEach(p=>{
+    html+=`<tr><td><b>${p.name}</b></td><td style="font-size:11px;color:#888">${p.deloProNum||''}</td>
+      <td><span class="badge ${p.coatingType==='black'?'berr':'bgr'}">${p.coatingType==='black'?'Чорний':'Білий'}</span></td>
+      <td class="r">${p.drumLoad||'—'}</td><td class="r">${p.amperage||'—'}</td><td class="r">${p.voltage||'—'}</td><td class="r">${p.time||'—'}</td>
+      <td style="font-size:11px;color:#888">${p.notes||''}</td>
+      <td><button class="btn bdef bsm" onclick="openProdModal('${p.id}')">✏️</button><button class="btn bd2 bsm" onclick="delProd('${p.id}')">✕</button></td></tr>`;
+  });
+  html+='</tbody></table>';document.getElementById('pg-products').innerHTML=html;
+}
+function openProdModal(id){
+  editIds.prod=id;const s=gS(),p=id?s.products.find(x=>x.id===id):null;
+  document.getElementById('mProdT').textContent=id?'Редагувати':'Новий виріб';
+  document.getElementById('mProdB').innerHTML=`
+    <div class="fg g2"><div><label>Назва виробу</label><input type="text" id="pdN" value="${p?.name||''}"></div><div><label>Номер у ДелоПро</label><input type="text" id="pdDP" value="${p?.deloProNum||''}"></div></div>
+    <div class="fg g2"><div><label>Тип покриття</label><select id="pdCT"><option value="white" ${p?.coatingType!=='black'?'selected':''}>Білий цинк</option><option value="black" ${p?.coatingType==='black'?'selected':''}>Чорний цинк</option></select></div><div><label>Завант. барабан (кг)</label><input type="number" id="pdDL" step="0.1" value="${p?.drumLoad||''}"></div></div>
+    <div class="fg g3"><div><label>Струм (А)</label><input type="number" id="pdA" value="${p?.amperage||''}"></div><div><label>Напруга (В)</label><input type="number" id="pdV" value="${p?.voltage||''}"></div><div><label>Час (хв)</label><input type="number" id="pdT" value="${p?.time||''}"></div></div>
+    <div><label>Примітка</label><textarea id="pdNote" rows="2">${p?.notes||''}</textarea></div>`;
+  oM('mProd');
+}
+async function saveProd(){
+  const s=gS();if(!s.products)s.products=[];
+  const obj={id:editIds.prod||uid(),name:gv('pdN'),deloProNum:gv('pdDP'),coatingType:gv('pdCT'),drumLoad:fv('pdDL'),amperage:fv('pdA'),voltage:fv('pdV'),time:fv('pdT'),notes:gv('pdNote')};
+  if(editIds.prod){const i=s.products.findIndex(p=>p.id===editIds.prod);if(i>=0)s.products[i]=obj;}else s.products.push(obj);
+  await sS(s);cM('mProd');renderProducts();
+}
+async function delProd(id){if(!confirm('Видалити?'))return;const s=gS();s.products=s.products.filter(p=>p.id!==id);await sS(s);renderProducts();}
+
+// ===== SUMMARY =====
+function renderSummary(){
+  const s=gS(),data=gMD(CY,CM),days=dIM(CY,CM);
+  const pays=gPay().filter(p=>{const ym=`${CY}-${String(CM+1).padStart(2,'0')}`;return p.date&&p.date.startsWith(ym);});
+  let tWz=0,tBz=0,tWg=0,tEe=0,tWtr=0,tChem=0,tOth=0,tCost=0,wD=0;const rows=[];
+  for(let d=1;d<=days;d++){
+    const dd=data[d];if(!dd||dd.weekend)continue;wD++;
+    tWz+=dd.wz||0;tBz+=dd.bz||0;tWg+=dd.wage||0;tEe+=dd.eeCost||0;tWtr+=dd.waterCost||0;tChem+=dd.chemTotal||0;tOth+=dd.other||0;tCost+=dd.totalCost||0;
+    rows.push({d,kg:(dd.wz||0)+(dd.bz||0),wg:dd.wage||0,ee:+(dd.eeCost||0),wtr:+(dd.waterCost||0),chem:dd.chemTotal||0,oth:dd.other||0,cost:dd.totalCost||0,seb:dd.seb||0});
+  }
+  const tKg=tWz+tBz,avgSeb=tKg>0?(tCost/tKg).toFixed(2):0;
+  const tPay=pays.reduce((a,p)=>a+(parseFloat(p.amount)||0),0),sebPay=tKg>0?(tPay/tKg).toFixed(2):0;
+  let html=`<div class="krow">
+    <div class="kpi"><div class="kpi-l">Покрито</div><div class="kpi-v">${tKg} кг</div><div class="kpi-s">${wD} дн.</div></div>
+    <div class="kpi"><div class="kpi-l">Собів.(витрати)</div><div class="kpi-v">${avgSeb} грн/кг</div></div>
+    <div class="kpi"><div class="kpi-l">Собів.(оплати)</div><div class="kpi-v">${sebPay} грн/кг</div></div>
+    <div class="kpi"><div class="kpi-l">Витрати</div><div class="kpi-v">${Math.round(tCost).toLocaleString('uk')} грн</div></div>
+    <div class="kpi"><div class="kpi-l">Оплачено</div><div class="kpi-v">${Math.round(tPay).toLocaleString('uk')} грн</div></div>
+  </div>`;
+  const items=[['Хімія',tChem,'#3498db'],['ЗП',tWg,'#27ae60'],['ЕЕ',tEe,'#f39c12'],['Вода',tWtr,'#1abc9c'],['Інші',tOth,'#9b59b6']];
+  const maxV=Math.max(...items.map(x=>x[1]),1);
+  html+=`<div class="bar-wrap"><div style="font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:8px">Структура витрат</div>`;
+  items.forEach(([nm,v,col])=>{const sh=tCost>0?(v/tCost*100).toFixed(1):0;html+=`<div class="bar-row"><div class="bar-lbl">${nm}</div><div class="bar-bg"><div class="bar-fill" style="width:${(v/maxV*100).toFixed(1)}%;background:${col}"></div></div><div class="bar-val">${Math.round(v).toLocaleString('uk')} грн <span style="color:#aaa;font-size:10px">${sh}%</span></div></div>`;});
+  html+=`</div><div style="overflow-x:auto;margin-bottom:12px"><table class="tbl"><thead><tr><th>День</th><th class="r">кг</th><th class="r">ЗП</th><th class="r">ЕЕ</th><th class="r">Вода</th><th class="r">Хімія</th><th class="r">Інше</th><th class="r">Разом</th><th class="r">грн/кг</th></tr></thead><tbody>`;
+  rows.forEach(r=>{html+=`<tr><td>${r.d} ${MN[CM].slice(0,3)}</td><td class="r">${r.kg}</td><td class="r">${Math.round(r.wg)}</td><td class="r">${r.ee.toFixed(0)}</td><td class="r">${r.wtr.toFixed(0)}</td><td class="r">${Math.round(r.chem)}</td><td class="r">${Math.round(r.oth)}</td><td class="r">${Math.round(r.cost)}</td><td class="r"><b>${r.seb}</b></td></tr>`;});
+  html+=`<tr class="tot"><td>ПІДСУМОК</td><td class="r">${tKg}</td><td class="r">${Math.round(tWg)}</td><td class="r">${tEe.toFixed(0)}</td><td class="r">${tWtr.toFixed(0)}</td><td class="r">${Math.round(tChem)}</td><td class="r">${Math.round(tOth)}</td><td class="r">${Math.round(tCost)}</td><td class="r"><b>${avgSeb}</b></td></tr></tbody></table></div>`;
+  const chemAgg={};
+  for(let d=1;d<=days;d++){const dd=data[d];if(!dd||dd.weekend)continue;(dd.chemRows||[]).forEach(r=>{if(!r.qty)return;if(!chemAgg[r.chemId])chemAgg[r.chemId]={qty:0,sum:0};chemAgg[r.chemId].qty+=r.qty;chemAgg[r.chemId].sum+=r.qty*r.price;});}
+  html+=`<div style="font-size:12px;font-weight:600;color:#1a3a5c;margin-bottom:6px">Витрати хімії</div><table class="tbl"><thead><tr><th>Хімікат</th><th class="r">Кількість</th><th class="r">Сума грн</th></tr></thead><tbody>`;
+  let chemGT=0;Object.entries(chemAgg).forEach(([cid,v])=>{const c=s.chem.find(x=>x.id===cid);chemGT+=v.sum;html+=`<tr><td style="font-size:11px">${c?c.name:cid}</td><td class="r">${v.qty.toFixed(3)} ${c?.unit||''}</td><td class="r">${v.sum.toFixed(2)}</td></tr>`;});
+  html+=`<tr class="tot"><td colspan="2">Разом</td><td class="r">${chemGT.toFixed(2)}</td></tr></tbody></table>`;
+  document.getElementById('pg-summary').innerHTML=html;
+}
+
+// ===== SETTINGS =====
+function renderSettings(){
+  const s=gS();
+  let chemR=s.chem.map((c,i)=>`<tr><td><input type="text" value="${c.name}" onchange="updC(${i},'name',this.value)" style="font-size:11px"></td><td><input type="number" step="0.01" value="${c.price}" onchange="updC(${i},'price',parseFloat(this.value))" style="width:75px;font-size:11px"></td><td><input type="text" value="${c.unit||''}" onchange="updC(${i},'unit',this.value)" style="width:45px;font-size:11px"></td><td><button class="btn bd2 bsm" onclick="delC(${i})">✕</button></td></tr>`).join('');
+  document.getElementById('pg-settings').innerHTML=`
+    <div style="background:#fff;border:1px solid #dde;border-radius:8px;padding:13px;margin-bottom:10px">
+      <h3 style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:9px">Тарифи</h3>
+      <div class="fg g2"><div><label>ЕЕ (грн/кВт·год)</label><input type="number" value="${s.eeRate}" step="0.01" onchange="updR('eeRate',this.value)"></div><div><label>Вода (грн/м³)</label><input type="number" value="${s.waterRate||0}" step="0.01" onchange="updR('waterRate',this.value)"></div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #dde;border-radius:8px;padding:13px;margin-bottom:10px">
+      <h3 style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:8px">Хімікати</h3>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f5f5f0"><th style="padding:4px 7px;font-size:11px;text-align:left">Назва</th><th style="font-size:11px;padding:4px">Ціна</th><th style="font-size:11px;padding:4px">Од.</th><th></th></tr></thead><tbody id="chemSB">${chemR}</tbody></table></div>
+      <button class="btn bsuc bsm" style="margin-top:7px" onclick="addC()">+ Хімікат</button>
+    </div>
+    <div style="background:#fff;border:1px solid #dde;border-radius:8px;padding:13px">
+      <h3 style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:8px">☁️ База даних</h3>
+      <div style="font-size:12px;color:#555;margin-bottom:8px">Підключено до Supabase: <b style="color:#27ae60">kklnjlakwmoppjgcxdba</b></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bp" onclick="expAll()">📥 Експорт JSON (backup)</button>
+        <button class="btn bdef" onclick="document.getElementById('impF').click()">📤 Імпорт JSON</button>
+        <input type="file" id="impF" accept=".json" style="display:none" onchange="impAll(this)">
+      </div>
+    </div>`;
+}
+async function updC(i,f,v){const s=gS();s.chem[i][f]=v;await sS(s);}
+async function delC(i){if(!confirm('Видалити?'))return;const s=gS();s.chem.splice(i,1);await sS(s);renderSettings();}
+async function addC(){const s=gS();s.chem.push({id:uid(),name:'Новий',price:0,unit:'кг'});await sS(s);renderSettings();}
+async function updR(k,v){const s=gS();s[k]=parseFloat(v)||0;await sS(s);}
+
+function expAll(){
+  const all={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('galv_'))all[k]=localStorage.getItem(k);}
+  if(!Object.keys(all).length){alert('Немає даних');return;}
+  const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`galvanika_${CY}_${CM+1}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},200);
+}
+function impAll(inp){
+  const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=e=>{try{const d=JSON.parse(e.target.result);let n=0;Object.entries(d).forEach(([k,v])=>{if(k.startsWith('galv_')){localStorage.setItem(k,v);n++;}});alert(`Імпортовано ${n} записів`);renderDays();}catch{alert('Помилка');}};
+  r.readAsText(f);
+}
+
+// INIT
+document.getElementById('mlabel').textContent=MN[CM]+' '+CY;
+initFromSB();
+</script>
+</body>
+</html>
