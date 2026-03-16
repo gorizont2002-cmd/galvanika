@@ -190,7 +190,17 @@ const lsg=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 const lss=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
 function ensureArr(v){return Array.isArray(v)?v:(v?[v]:[]);}
-function gS(){let s=lsg('galv_s');if(!s)s={chem:DEF_CHEM.map(c=>({...c})),anaTypes:DEF_AT.map(a=>({...a})),equipment:[],products:[],eeRate:9.37,waterRate:0};if(!s.products)s.products=[];if(!s.equipment)s.equipment=[];if(!s.anaTypes)s.anaTypes=DEF_AT.map(a=>({...a}));if(!s.chem)s.chem=DEF_CHEM.map(c=>({...c}));return s;}
+function gS(){
+  let s=lsg('galv_s');
+  if(!s||typeof s!=='object'||Array.isArray(s))s={};
+  if(!Array.isArray(s.chem)||!s.chem.length)s.chem=DEF_CHEM.map(c=>({...c}));
+  if(!Array.isArray(s.anaTypes)||!s.anaTypes.length)s.anaTypes=DEF_AT.map(a=>({...a}));
+  if(!Array.isArray(s.equipment))s.equipment=[];
+  if(!Array.isArray(s.products))s.products=[];
+  if(!s.eeRate)s.eeRate=9.37;
+  if(s.waterRate===undefined||s.waterRate===null)s.waterRate=0;
+  return s;
+}
 async function sS(s){lss('galv_s',JSON.stringify(s));await sbSet('galv_settings','main',s);showSync('💾 Збережено');}
 function gMD(y,m){const d=lsg(`galv_${y}_${m}`);return (d&&typeof d==='object'&&!Array.isArray(d))?d:{};}
 async function sMD(y,m,d){lss(`galv_${y}_${m}`,JSON.stringify(d));await sbSet('galv_month',`${y}_${m}`,d);showSync('💾 День збережено');}
@@ -336,44 +346,60 @@ function openDay(d){
   curDay=d;_selProdIds={};
   const s=gS(),data=gMD(CY,CM),dd=data[d]||{};
   const wknd=dd.weekend!==undefined?dd.weekend:isWE(CY,CM,d);
-  document.getElementById('mDayT').textContent=d+' '+MN[CM]+' '+CY+' ('+DW[new Date(CY,CM,d).getDay()]+')';
+  document.getElementById('mDayT').textContent=`${d} ${MN[CM]} ${CY} (${DW[new Date(CY,CM,d).getDay()]})`;
   _prodRowIdx=0;_chemRowIdx=0;
-  const savedPR=dd.prodRows||[];const savedCR=dd.chemRows||[];
+  const savedPR=dd.prodRows||[];
+  const savedCR=dd.chemRows||[];
   let prHtml=savedPR.map((r,i)=>{_prodRowIdx=i+1;return buildProdRow(i,r,s);}).join('');
   let crHtml=savedCR.map((r,i)=>{_chemRowIdx=i+1;return buildChemRow(i,r,s);}).join('');
   savedPR.forEach((r,i)=>{if(r.prodId)_selProdIds[i]=r.prodId;});
-  let h='<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">';
-  h+='<input type="checkbox" id="isWE" '+(wknd?'checked':'')+' onchange="document.getElementById(\'wf\').style.display=this.checked?\'none\':\'\'"><label for="isWE" style="font-size:13px;color:#c0392b;font-weight:600">Вихідний / Простій</label></div>';
-  h+='<div id="wf" '+(wknd?'style="display:none"':'')+'>'+
-    '<div class="sec"><div class="st">Час роботи</div><div class="fg g4">'+
-    '<div><label>Початок</label><input type="time" id="tStart" value="'+(dd.tStart||'')+'"></div>'+
-    '<div><label>Кінець</label><input type="time" id="tEnd" value="'+(dd.tEnd||'')+'"></div>'+
-    '<div><label>Оператор</label><input type="text" id="operator" value="'+(dd.operator||'')+'"></div>'+
-    '<div><label>Примітка</label><input type="text" id="dayNote" value="'+(dd.notes||'')+'"></div>'+
-    '</div></div>'+
-    '<div class="sec"><div class="st">Вироби / Виробіток</div>'+
-    '<table class="prtbl"><thead><tr><th style="width:35%">Виріб</th><th>Бараб.</th><th>кг</th><th>Тип</th><th>Примітка</th><th></th></tr></thead>'+
-    '<tbody id="prBody">'+prHtml+'</tbody></table>'+
-    '<button class="btn bsuc bsm" onclick="addProdRow()">+ Виріб</button>'+
-    '<div style="margin-top:5px;font-size:12px;color:#1a3a5c">Загалом: <b id="totKgDisp">—</b> кг (покр.: <b id="coatKgDisp">—</b>, перепокр.: <b id="recoatKgDisp">—</b>)</div></div>'+
-    '<div class="sec"><div class="st">Хімія по ваннах</div>'+
-    '<table class="chtbl"><thead><tr><th style="width:35%">Хімікат</th><th style="width:25%">Ванна</th><th>Ціна</th><th>Кількість</th><th>Сума</th><th></th></tr></thead>'+
-    '<tbody id="chBody">'+crHtml+'</tbody></table>'+
-    '<button class="btn bsuc bsm" onclick="addChemRow()">+ Хімія</button>'+
-    '<div style="margin-top:5px;font-size:12px">Разом хімія: <b id="chemTotDisp" style="color:#c0392b">—</b> грн</div></div>'+
-    '<div class="sec"><div class="st">ЕЕ, Вода, ЗП</div><div class="fg g4">'+
-    '<div><label>ЕЕ кВт·год</label><input type="number" id="eeKwh" value="'+(dd.eeKwh||'')+'" oninput="calcEE()"></div>'+
-    '<div><label>Тариф ЕЕ</label><input type="number" id="eeRate" step="0.01" value="'+(dd.eeRate!==undefined?dd.eeRate:s.eeRate)+'" oninput="calcEE()"></div>'+
-    '<div><label>Вода м³</label><input type="number" id="wtr" value="'+(dd.water||'')+'" oninput="calcEE()"></div>'+
-    '<div><label>Тариф вода</label><input type="number" id="wtrRate" step="0.01" value="'+(dd.waterRate||s.waterRate)+'" oninput="calcEE()"></div>'+
-    '</div><div style="font-size:12px;color:#555" id="eeDisp"></div>'+
-    '<div class="fg g2" style="margin-top:7px">'+
-    '<div><label>ЗП (грн)</label><input type="number" id="wage" value="'+(dd.wage||'')+'"></div>'+
-    '<div><label>Інші витрати (грн)</label><input type="number" id="other" value="'+(dd.other||'')+'"></div>'+
-    '</div></div></div>';
-  document.getElementById('mDayB').innerHTML=h;
+  document.getElementById('mDayB').innerHTML=`
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+      <input type="checkbox" id="isWE" ${wknd?'checked':''} onchange="document.getElementById('wf').style.display=this.checked?'none':''">
+      <label for="isWE" style="font-size:13px;color:#c0392b;font-weight:600">Вихідний / Простій</label>
+    </div>
+    <div id="wf" ${wknd?'style="display:none"':''}>
+      <div class="sec">
+        <div class="st">Час роботи</div>
+        <div class="fg g4">
+          <div><label>Початок</label><input type="time" id="tStart" value="${dd.tStart||''}"></div>
+          <div><label>Кінець</label><input type="time" id="tEnd" value="${dd.tEnd||''}"></div>
+          <div><label>Оператор</label><input type="text" id="operator" value="${dd.operator||''}"></div>
+          <div><label>Примітка</label><input type="text" id="dayNote" value="${dd.notes||''}"></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="st">Вироби / Виробіток</div>
+        <table class="prtbl"><thead><tr><th style="width:35%">Виріб</th><th>Бараб.</th><th>кг</th><th>Тип</th><th>Примітка</th><th></th></tr></thead>
+        <tbody id="prBody">${prHtml}</tbody></table>
+        <button class="btn bsuc bsm" onclick="addProdRow()">+ Виріб</button>
+        <div style="margin-top:5px;font-size:12px;color:#1a3a5c">Загалом: <b id="totKgDisp">—</b> кг (покр.: <b id="coatKgDisp">—</b>, перепокр.: <b id="recoatKgDisp">—</b>)</div>
+      </div>
+      <div class="sec">
+        <div class="st">Хімія по ваннах</div>
+        <table class="chtbl"><thead><tr><th style="width:35%">Хімікат</th><th style="width:25%">Ванна</th><th>Ціна</th><th>Кількість</th><th>Сума</th><th></th></tr></thead>
+        <tbody id="chBody">${crHtml}</tbody></table>
+        <button class="btn bsuc bsm" onclick="addChemRow()">+ Хімія</button>
+        <div style="margin-top:5px;font-size:12px">Разом хімія: <b id="chemTotDisp" style="color:#c0392b">—</b> грн</div>
+      </div>
+      <div class="sec">
+        <div class="st">ЕЕ, Вода, ЗП</div>
+        <div class="fg g4">
+          <div><label>ЕЕ кВт·год</label><input type="number" id="eeKwh" value="${dd.eeKwh||''}" oninput="calcEE()"></div>
+          <div><label>Тариф ЕЕ</label><input type="number" id="eeRate" step="0.01" value="${dd.eeRate!==undefined?dd.eeRate:gS().eeRate}" oninput="calcEE()"></div>
+          <div><label>Вода м³</label><input type="number" id="wtr" value="${dd.water||''}" oninput="calcEE()"></div>
+          <div><label>Тариф вода</label><input type="number" id="wtrRate" step="0.01" value="${dd.waterRate||gS().waterRate}" oninput="calcEE()"></div>
+        </div>
+        <div style="font-size:12px;color:#555" id="eeDisp"></div>
+        <div class="fg g2" style="margin-top:7px">
+          <div><label>ЗП (грн)</label><input type="number" id="wage" value="${dd.wage||''}"></div>
+          <div><label>Інші витрати (грн)</label><input type="number" id="other" value="${dd.other||''}"></div>
+        </div>
+      </div>
+    </div>`;
   oM('mDay');calcProdTotals();calcChemTotal();calcEE();
 }
+
 function buildProdRow(i,r,s){
   const name=r&&r.prodId?(s.products.find(p=>p.id===r.prodId)||{}).name||'':'';
   return `<tr id="pr_${i}">
